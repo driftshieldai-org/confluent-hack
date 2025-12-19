@@ -17,3 +17,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Entry point for Vertex AI training
 ENTRYPOINT ["python", "train.py"]
+
