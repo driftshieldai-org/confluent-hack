@@ -41,3 +41,17 @@ resource "google_bigquery_table" "table" {
   schema =file("${path.module}/schemas/${var.train_table_id}.json")
   deletion_protection=false
 }
+
+resource "google_service_account" "gcp_sa" {
+  account_id   = "driftshieldai-sa"
+  project      = var.project_id
+  display_name = "driftshieldai Service Account"
+  description  = "Service account used in driftshieldai application"
+}
+
+resource "google_project_iam_member" "sa_roles" {
+  for_each = toset(["roles/artifactregistry.reader","roles/bigquery.dataEditor","roles/bigquery.jobUser","roles/bigquery.readSessionUser","roles/run.invoker","roles/dataflow.worker","roles/storage.objectUser","roles/storage.bucketViewer","roles/aiplatform.user"])
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.gcp_sa.email}"
+}

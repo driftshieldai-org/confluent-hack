@@ -9,7 +9,7 @@ terraform {
   # This stores the "save file" for your infrastructure.
   backend "gcs" {
     bucket  = "aipartnercatalyst-confluent-tf-state" # <--- REPLACE THIS
-    prefix  = "prod/state"
+    prefix  = "jobs/state"
   }
 }
 
