@@ -41,4 +41,3 @@ resource "google_bigquery_table" "table" {
   schema =file("${path.module}/schemas/${var.train_table_id}.json")
   deletion_protection=false
 }
-
