@@ -14,7 +14,7 @@ resource "google_vertex_ai_custom_job" "custom_training_job" {
 
       container_spec {
         # The Artifact Registry URI: region-docker.pkg.dev/project_id/repo_name/image_name:tag
-        image_uri = "us-central1-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.image_name}:latest"        
+        image_uri = "us-central1-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.training_image_name}:latest"        
       }
     }
 
