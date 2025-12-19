@@ -9,7 +9,8 @@ on:
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: us-central1
-  ARTIFACT_REGISTRY_REPO: driftai
+  GAR_REPO_NAME: driftshield-ai-docker
+  TRAIN_IMAGE_NAME: vertexai-custom 
 
 jobs:
   build-and-deploy:
@@ -77,3 +78,60 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
+  
+  changes_train:
+    runs-on: ubuntu-latest
+    outputs:
+      # Expose the boolean 'true' or 'false' to other jobs
+      train: ${{ steps.filter.outputs.train }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            train:
+              - 'train/**'
+              
+  build-push-train:
+    name: 'Build & Push Docker Image'
+    needs: [terraform, changes_train]  # Waits for Terraform to finish successfully
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.train == 'true'
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate to Google Cloud
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # 2. Setup Cloud SDK (Required for docker auth)
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      # 3. Configure Docker to use gcloud as a credential helper
+      - name: Configure Docker Auth
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      # 4. Build and Push
+      - name: Build and Push Image
+        env:
+          # Format: REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME/IMAGE_NAME:TAG
+          IMAGE_TAG: ${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO_NAME }}/${{ env.TRAIN_IMAGE_NAME }}:${{ github.sha }}
+          IMAGE_LATEST: ${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO_NAME }}/${{ env.TRAIN_IMAGE_NAME }}:latest
+        run: |
+          echo "Building image: $IMAGE_TAG"
+          
+          # Build the image from the 'train' folder
+          docker build -t $IMAGE_TAG -t $IMAGE_LATEST ./train
+          
+          echo "Pushing image to Artifact Registry..."
+          docker push $IMAGE_TAG
+          docker push $IMAGE_LATEST
