@@ -6,7 +6,6 @@ terraform {
     }
   }
 
-  # STOP: You must create this bucket manually in GCP first!
   # This stores the "save file" for your infrastructure.
   backend "gcs" {
     bucket  = "aipartnercatalyst-confluent-tf-state" # <--- REPLACE THIS
