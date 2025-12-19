@@ -26,3 +26,9 @@ variable "training_image_name" {
   default     = "vertexai-custom"
 }
 
+variable "service_account_id" {
+  description = "The GCP service account used for application"
+  type        = string
+}
+
+

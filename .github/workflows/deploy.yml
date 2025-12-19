@@ -147,9 +147,12 @@ jobs:
 
   terraform-jobs:
     name: 'Terraform-job'
-    needs: changes_check
+    needs: [changes_check, build-push-train]
     if: |
+      always() && 
+      (needs.build-push-train.result == 'success' || needs.build-push-train.result == 'skipped') && 
       (needs.changes_check.outputs.terraform == 'true' || needs.changes_check.outputs.train == 'true')
+    
     runs-on: ubuntu-latest
 
     permissions:
