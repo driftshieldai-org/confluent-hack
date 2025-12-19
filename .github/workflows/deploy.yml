@@ -92,6 +92,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          base: main
           filters: |
             train:
               - 'train/**'
@@ -102,7 +103,7 @@ jobs:
     name: 'Build & Push Docker Image'
     needs: [terraform, changes_train]  # Waits for Terraform to finish successfully
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && (needs.changes.outputs.train == 'true' || github.event_name == 'workflow_dispatch')
+    if: github.ref == 'refs/heads/main' && needs.changes_train.outputs.train == 'true'
     
     steps:
       - name: Checkout Code
