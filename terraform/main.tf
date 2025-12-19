@@ -42,5 +42,3 @@ resource "google_bigquery_table" "table" {
   deletion_protection=false
 }
 
-
-
