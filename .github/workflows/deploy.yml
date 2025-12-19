@@ -3,7 +3,7 @@ name: Driftshield Deploy
 on:
   push:
     branches:
-      - master
+      - main
   workflow_dispatch:
 
 env:
