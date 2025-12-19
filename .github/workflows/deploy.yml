@@ -1,0 +1,55 @@
+name: Create GCP Resources
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  PROJECT_ID: 'aipartnercatalyst-confluent-01'
+  # The full path you got from the 'describe' command
+  WIF_PROVIDER: 'projects/902738993392/locations/global/workloadIdentityPools/github-pool-03/providers/github-provider'
+  # The service account email you used in Step 1 above
+  SERVICE_ACCOUNT: 'sa-github@aipartnercatalyst-confluent-01.iam.gserviceaccount.com'
+  # A name for a new bucket (must be globally unique)
+  BUCKET_NAME: 'my-demo-bucket-aipartner-01'
+
+jobs:
+  gcp-deploy:
+    runs-on: ubuntu-latest
+    
+    # These permissions are MANDATORY for Workload Identity
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate to Google Cloud
+      - id: 'auth'
+        name: 'Authenticate via Workload Identity'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: '${{ env.WIF_PROVIDER }}'
+          service_account: '${{ env.SERVICE_ACCOUNT }}'
+
+      # 2. Install/Setup gcloud CLI
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      # 3. Create Resources (Example: Create a Storage Bucket)
+      - name: 'Create Cloud Storage Bucket'
+        run: |
+          echo "Checking if bucket exists..."
+          if ! gcloud storage buckets describe gs://${{ env.BUCKET_NAME }} > /dev/null 2>&1; then
+            echo "Bucket does not exist. Creating..."
+            gcloud storage buckets create gs://${{ env.BUCKET_NAME }} --location=us-central1
+            echo "Bucket created successfully."
+          else
+            echo "Bucket already exists."
+          fi
+
+      # 4. Verify Access
+      - name: 'List Buckets'
+        run: gcloud storage buckets list --project=${{ env.PROJECT_ID }}
