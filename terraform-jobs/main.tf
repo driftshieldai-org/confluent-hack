@@ -3,7 +3,7 @@ resource "null_resource" "submit_vertex_job" {
   triggers = {
     dir_sha = sha256(join("", [
       for f in fileset("${path.module}/../train", "**") : 
-      filesha256("${path.module}/../train/${}")
+      filesha256("${path.module}/../train/${f}")
     ]))
   }
 
