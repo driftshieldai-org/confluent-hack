@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '--table_id',
     type=str,
-    default='aipartnercatalyst-confluent-01.driftshield_ai_dataset.trip_data_2021', # table used for training
+    default='aipartnercatalyst-confluent-01.driftshield_ai_dataset.trip_data_2024', # table used for training
     help='Full BigQuery table ID to read data from (e.g., project.dataset.table)'
 )
 parser.add_argument(
