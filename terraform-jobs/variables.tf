@@ -20,7 +20,7 @@ variable "repo_name" {
   default     = "driftshield-ai-docker"
 }
 
-variable "image_name" {
+variable "training_image_name" {
   description = "Name of the Artifact Registry training Repo"
   type        = string
   default     = "vertexai-custom"
