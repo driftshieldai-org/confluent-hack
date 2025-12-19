@@ -25,27 +25,8 @@ resource "google_bigquery_dataset" "dataset" {
 # 4. Create BigQuery Table
 resource "google_bigquery_table" "table" {
   dataset_id = google_bigquery_dataset.dataset.dataset_id
-  table_id   = var.table_id
-  # Schema defined in JSON format
-  schema = <<EOF
-[
-  {
-    "name": "id",
-    "type": "INTEGER",
-    "mode": "REQUIRED"
-  },
-  {
-    "name": "full_name",
-    "type": "STRING",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "created_at",
-    "type": "TIMESTAMP",
-    "mode": "NULLABLE"
-  }
-]
-EOF
+  table_id   = var.train_table_id
+  schema =file("${path.module}/schemas/${var.train_table_id}.json")
 }
 
 
