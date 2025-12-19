@@ -1,3 +1,15 @@
+resource "google_project_service" "gcp_services" {
+  for_each = ["artifactregistry.googleapis.com",
+              "storage.googleapis.com",
+              "bigquery.googleapis.com",
+              "iam.googleapis.com"]
+
+  project = var.project_id
+  service = each.key
+  disable_on_destroy         = false
+  disable_dependent_services = false
+}
+
 # 1. Create GCS Bucket
 resource "google_storage_bucket" "bucket" {
   name                        = var.bucket_name
