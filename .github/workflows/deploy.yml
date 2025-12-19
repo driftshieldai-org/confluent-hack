@@ -7,7 +7,7 @@ on:
 env:
   PROJECT_ID: 'aipartnercatalyst-confluent-01'
   # The full path you got from the 'describe' command
-  WIF_PROVIDER: 'projects/902738993392/locations/global/workloadIdentityPools/github-pool-03/providers/github-provider'
+  WIF_PROVIDER: 'principalSet://iam.googleapis.com/projects/902738993392/locations/global/workloadIdentityPools/github-pool-03/attribute.repository/ariftshieldai-org/confluent-hack'
   # The service account email you used in Step 1 above
   SERVICE_ACCOUNT: 'sa-github@aipartnercatalyst-confluent-01.iam.gserviceaccount.com'
   # A name for a new bucket (must be globally unique)
