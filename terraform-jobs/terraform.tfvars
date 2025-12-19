@@ -1,0 +1,6 @@
+project_id    = "aipartnercatalyst-confluent-01"   
+region        = "us-central1"
+bucket_name   = "aipartnercatalyst-confluent-bucket"
+repo_name = "driftshield-ai-docker"
+dataset_id = "driftshield_ai_dataset"
+training_image_name = "vertexai-custom"
