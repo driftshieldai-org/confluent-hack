@@ -1,0 +1,30 @@
+[
+  {
+    "name": "vendor_id",
+    "mode": "",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "pickup_datetime",
+    "mode": "",
+    "type": "TIMESTAMP",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "dropoff_datetime",
+    "mode": "",
+    "type": "TIMESTAMP",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "insert_timestamp",
+    "mode": "",
+    "type": "TIMESTAMP",
+    "description": "",
+    "fields": []
+  }
+]
