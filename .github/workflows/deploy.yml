@@ -85,19 +85,24 @@ jobs:
       # Expose the boolean 'true' or 'false' to other jobs
       train: ${{ steps.filter.outputs.train }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
             train:
               - 'train/**'
-              
+      - name: Debug Output
+        run: echo "Changes detected in train? ${{ steps.filter.outputs.train }}"
+       
   build-push-train:
     name: 'Build & Push Docker Image'
     needs: [terraform, changes_train]  # Waits for Terraform to finish successfully
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && needs.changes.outputs.train == 'true'
+    if: github.ref == 'refs/heads/main' && (needs.changes.outputs.train == 'true' || github.event_name == 'workflow_dispatch')
     
     steps:
       - name: Checkout Code
