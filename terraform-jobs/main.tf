@@ -21,8 +21,8 @@
 
 resource "google_storage_bucket_object" "template" {
   bucket = var.bucket_name
-  name   = "dags/dataflow/template/realtime_stream_anomaly.json"
-  source = "dataflow/template/realtime_stream_anomaly.json"
+  name   = "dataflow/template/realtime_stream_anomaly.json"
+  source = "${path.module}/../dataflow/template/realtime_stream_anomaly.json"
 }
 
 resource "google_dataflow_flex_template_job" "job" {
