@@ -37,11 +37,11 @@ resource "google_dataflow_flex_template_job" "job" {
   parameters = {
     bootstrap_servers=var.bootstrap_servers,
     kafka_topic = var.kafka_topic,
-    output_table=var.stream_table,
-    model_dir="gs://${var.bucket_name}/models",
-    anomaly_output_table=var.anomaly_table,
-    summary_output_table=var.anomaly_summ_table,
-    api_projectvar.project_id,
+    output_table = var.stream_table,
+    model_dir = "gs://${var.bucket_name}/models",
+    anomaly_output_table = var.anomaly_table,
+    summary_output_table = var.anomaly_summ_table,
+    api_project = var.project_id,
     api_region=var.region
   }
   enable_streaming_engine = true
