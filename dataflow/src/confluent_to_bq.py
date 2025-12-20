@@ -524,8 +524,8 @@ def run(argv=None):
         ]
     }
 
-    api_key = get_secret(known_args.project_id, 'KAFKA_KEY')
-    api_secret = get_secret(known_args.project_id, 'KAFKA_SECRET')
+    api_key = get_secret(known_args.api_project, 'KAFKA_KEY')
+    api_secret = get_secret(known_args.api_project, 'KAFKA_SECRET')
     sasl_jaas_config = (
         f'org.apache.kafka.common.security.plain.PlainLoginModule required '
         f'username="{api_key}" '
