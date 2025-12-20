@@ -1,0 +1,26 @@
+[
+  {
+    "name": "vendor_id",
+    "mode": "REQUIRED",
+    "type": "STRING",
+    "description": "Vendor id of the taxi service provier"
+  },
+  {
+    "name": "pickup_datetime",
+    "mode": "REQUIRED",
+    "type": "TIMESTAMP",
+    "description": "timestamp of pickup"
+  },
+  {
+    "name": "dropoff_datetime",
+    "mode": "NULLABLE",
+    "type": "TIMESTAMP",
+    "description": "timestamp of dropoff"
+  },
+  {
+    "name": "insert_timestamp",
+    "mode": "REQUIRED",
+    "type": "TIMESTAMP",
+    "description": "record insert timestamp"
+  }
+]
