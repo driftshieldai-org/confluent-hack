@@ -52,7 +52,9 @@ resource "google_dataflow_flex_template_job" "job" {
   ip_configuration        = "WORKER_IP_PRIVATE"
   service_account_email   = var.service_account_id
   on_delete               = "cancel"
+  network                 = "projects/${var.project_id}/networks/${var.vpc_network}"
+  subnetwork              = "regions/${var.region}/subnetworks/${var.subnet_name}"
 
-  depends_on = [ google_storage_bucket_object.template]
+ depends_on = [ google_storage_bucket_object.template]
 }
 
