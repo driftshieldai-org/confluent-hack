@@ -410,9 +410,9 @@ class SummarizeAnomaliesWithGeminiFn(beam.DoFn):
 
 def run(argv=None):
     """Main entry point; defines and runs the streaming pipeline."""
-	parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
 
-	parser.add_argument(
+    parser.add_argument(
         '--bootstrap_servers',
         required=True,
         help='Confluent Kafka bootstrap server(s) (e.g., "host:port,host2:port2")'
