@@ -1,0 +1,5 @@
+scikit-learn==1.4.2
+pandas
+google-cloud-storage
+google-cloud-bigquery
+google-cloud-aiplatform
