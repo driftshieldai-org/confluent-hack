@@ -50,3 +50,15 @@ variable "anomalies_summ_table_id" {
   description = "Name of the table used for storing anomalies summary"
   type        = string
 }
+
+variable "vpc_network" {
+  description = "Name of the VPC network"
+  type        = string
+}
+
+variable "subnet_name" {
+  description = "Name of vpc subnet"
+  type        = string
+}
+
+
