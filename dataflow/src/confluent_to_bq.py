@@ -536,7 +536,9 @@ def run(argv=None):
         'security.protocol': 'SASL_SSL',
         'sasl.mechanism': 'PLAIN',
         'sasl.jaas.config': sasl_jaas_config,
-        'ssl.endpoint.identification.algorithm': 'https'
+        'ssl.endpoint.identification.algorithm': 'https',
+		'group.id': 'bigquery-consumer-group-v1',  
+    	'auto.offset.reset': 'earliest'          
     }
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
