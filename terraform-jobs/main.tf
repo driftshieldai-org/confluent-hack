@@ -49,7 +49,7 @@ resource "google_dataflow_flex_template_job" "job" {
   # Optional overrides
   max_workers             =  1
   machine_type            =  "n1-standard-1"
-  ip_configuration        = "WORKER_IP_PRIVATE"
+  ip_configuration        = "WORKER_IP_PUBLIC"
   service_account_email   = var.service_account_id
   on_delete               = "cancel"
   network                 = "projects/${var.project_id}/networks/${var.vpc_network}"
