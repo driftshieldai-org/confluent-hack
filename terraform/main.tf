@@ -42,6 +42,41 @@ resource "google_bigquery_table" "table" {
   deletion_protection=false
 }
 
+resource "google_bigquery_table" "stream_table" {
+  dataset_id = google_bigquery_dataset.dataset.dataset_id
+  table_id   = var.stream_table_id
+  schema =file("${path.module}/schemas/${var.train_table_id}.json")
+  deletion_protection=false
+  time_partitioning {
+    type  = "DAY"
+    field = "insert_timestamp"
+  }
+}
+
+resource "google_bigquery_table" "anomalies_table" {
+  dataset_id = google_bigquery_dataset.dataset.dataset_id
+  table_id   = var.anomalies_table_id
+  schema =file("${path.module}/schemas/${var.train_table_id}.json")
+  deletion_protection=false
+  time_partitioning {
+    type  = "DAY"
+    field = "timestamp" 
+    expiration_ms  = 7776000000
+  }
+}
+
+resource "google_bigquery_table" "anomalies_summary_table" {
+  dataset_id = google_bigquery_dataset.dataset.dataset_id
+  table_id   = var.anomalies_summ_table_id
+  schema =file("${path.module}/schemas/${var.train_table_id}.json")
+  deletion_protection=false
+  time_partitioning {
+    type  = "DAY"
+    field = "window_timestamp" 
+    expiration_ms  = 7776000000
+  }
+}
+
 resource "google_service_account" "gcp_sa" {
   account_id   = "driftshieldai-sa"
   project      = var.project_id
