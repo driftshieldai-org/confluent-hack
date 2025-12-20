@@ -5,7 +5,7 @@ import json
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions
 from apache_beam.transforms.userstate import BagStateSpec, ReadModifyWriteStateSpec, TimerSpec, on_timer
-from apache_beam.io.gcp.pubsub import ReadFromPubSub
+from apache_beam.io.kafka import ReadFromKafka
 from apache_beam.coders import VarIntCoder, TupleCoder, FloatCoder
 from google.cloud import storage # Import storage for GCS operations
 import pickle
