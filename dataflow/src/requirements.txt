@@ -3,3 +3,4 @@ pandas
 google-cloud-storage
 google-cloud-bigquery
 google-cloud-aiplatform
+google-cloud-secret-manager
