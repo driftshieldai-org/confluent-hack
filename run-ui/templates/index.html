@@ -18,7 +18,7 @@
         }
         
         .flash-new {
-            animation: flash 2s ease-out;
+            animation: flash 5s ease-out;
         }
 
         .severity-high { color: #d9534f; font-weight: bold; }
@@ -89,7 +89,8 @@
                     <td class="severity-${row.severity.toLowerCase()}">${row.severity}</td>
                     <td>${row.vendor_id}</td>
                     <td>${row.count}</td>
-                    <td>${row.score_details || ''}</td>
+                    <td>${row.score}</td>
+                    <td>${row.details || ''}</td>
                 `;
                 tbody.appendChild(tr);
             });
