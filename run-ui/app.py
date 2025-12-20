@@ -31,7 +31,8 @@ def get_anomalies():
             severity,
             vendor_id,
             count,
-            score_details
+            score,
+            details
         FROM 
             `{ANOMALIES_TABLE}`
         ORDER BY 
@@ -49,7 +50,8 @@ def get_anomalies():
                 "severity": row["severity"],
                 "vendor_id": row["vendor_id"],
                 "count": row["count"],
-                "score_details": row["score_details"]
+                "score": row["score"],
+                "details": row["details"]
             })
         return jsonify(results), 200
     except Exception as e:
