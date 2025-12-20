@@ -41,7 +41,7 @@ class ParseKafkaMessage(beam.DoFn):
     def process(self, element, *args, **kwargs):
         try:
             # Kafka messages are often tuples of (key, value)
-            message_value = element[1] 
+            message_value = element.value 
             
             # Decode the byte string to a UTF-8 string and then parse as JSON
             parsed_data = json.loads(message_value.decode('utf-8'))
