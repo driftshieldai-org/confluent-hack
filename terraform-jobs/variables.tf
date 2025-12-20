@@ -66,4 +66,14 @@ variable "subnet_name" {
   type        = string
 }
 
+variable "ui_image_name" {
+  description = "Name of image created for UI cloud run"
+  type        = string
+}
+
+variable "cloudrun_name" {
+  description = "Name of cloud run service created for UI"
+  type        = string
+}
+
 
