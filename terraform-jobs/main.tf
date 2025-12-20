@@ -30,7 +30,7 @@ resource "google_dataflow_flex_template_job" "job" {
   name                    = "driftshieldai-df-job-${formatdate("YYYYMMDD-hhmm", timestamp())}"
 
   lifecycle {
-    ignore_changes = [name]
+    ignore_changes = [name,temp_location,staging_location,]
   }
 
   region                  = var.region
@@ -89,4 +89,12 @@ resource "google_cloud_run_v2_service" "anomaly-ui" {
     service_account = var.service_account_id 
   }
   
+}
+
+resource "google_cloud_run_v2_service_iam_member" "public_access" {
+  project  = google_cloud_run_v2_service.anomaly-ui.project
+  location = google_cloud_run_v2_service.anomaly-ui.location
+  name     = google_cloud_run_v2_service.anomaly-ui.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
