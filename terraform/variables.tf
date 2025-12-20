@@ -47,6 +47,6 @@ variable "anomalies_table_id" {
 }
 
 variable "anomalies_summ_table_id" {
-  description = "Name of the table used for string anomalies summary"
+  description = "Name of the table used for storing anomalies summary"
   type        = string
 }
