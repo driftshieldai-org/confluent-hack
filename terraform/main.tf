@@ -45,7 +45,7 @@ resource "google_bigquery_table" "table" {
 resource "google_bigquery_table" "stream_table" {
   dataset_id = google_bigquery_dataset.dataset.dataset_id
   table_id   = var.stream_table_id
-  schema =file("${path.module}/schemas/${var.train_table_id}.json")
+  schema =file("${path.module}/schemas/${var.stream_table_id}.json")
   deletion_protection=false
   time_partitioning {
     type  = "DAY"
@@ -56,7 +56,7 @@ resource "google_bigquery_table" "stream_table" {
 resource "google_bigquery_table" "anomalies_table" {
   dataset_id = google_bigquery_dataset.dataset.dataset_id
   table_id   = var.anomalies_table_id
-  schema =file("${path.module}/schemas/${var.train_table_id}.json")
+  schema =file("${path.module}/schemas/${var.anomalies_table_id}.json")
   deletion_protection=false
   time_partitioning {
     type  = "DAY"
@@ -68,7 +68,7 @@ resource "google_bigquery_table" "anomalies_table" {
 resource "google_bigquery_table" "anomalies_summary_table" {
   dataset_id = google_bigquery_dataset.dataset.dataset_id
   table_id   = var.anomalies_summ_table_id
-  schema =file("${path.module}/schemas/${var.train_table_id}.json")
+  schema =file("${path.module}/schemas/${var.anomalies_summ_table_id}.json")
   deletion_protection=false
   time_partitioning {
     type  = "DAY"
