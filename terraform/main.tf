@@ -90,3 +90,16 @@ resource "google_project_iam_member" "sa_roles" {
   role    = each.value
   member  = "serviceAccount:${google_service_account.gcp_sa.email}"
 }
+
+resource "google_compute_network" "vpc_network" {
+  name                    = var.vpc_network
+  auto_create_subnetworks = false
+  project      = var.project_id
+}
+
+resource "google_compute_subnetwork" "subnet" {
+  name          =  var.subnet_name
+  ip_cidr_range = "10.0.1.0/24"
+  region        = var.region
+  network       = google_compute_network.vpc_network.id
+}
