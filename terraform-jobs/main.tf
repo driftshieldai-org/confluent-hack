@@ -20,7 +20,38 @@
 #}
 
 resource "google_storage_bucket_object" "template" {
-  bucket = var.bucket_id
-  name   = "dags/template/realtime_stream_anomaly.json"
+  bucket = var.bucket_name
+  name   = "dags/dataflow/template/realtime_stream_anomaly.json"
   source = "dataflow/template/realtime_stream_anomaly.json"
 }
+
+resource "google_dataflow_flex_template_job" "job" {
+  provider                = google-beta
+  name                    = "driftshieldai-df-job-${formatdate("YYYYMMDD-hhmm", timestamp())}"
+  region                  = var.region
+  project                 = var.project_id
+  container_spec_gcs_path = "gs://${var.bucket_name}/dataflow/template/realtime_stream_anomaly.json"
+  temp_location           = "gs://${var.bucket_name}/dataflow/temp"
+  staging_location        = "gs://${var.bucket_name}/dataflow/staging"
+
+  parameters = {
+    input_subscription=projects/prj-vo-s-data-confluent-poc/subscriptions/test-sub,
+    output_table=var.stream_table,
+    model_dir="gs://${var.bucket_name}/models",
+    anomaly_output_table=var.anomaly_table,
+    summary_output_table=var.anomaly_summ_table,
+    api_projectvar.project_id,
+    api_region=var.region
+  }
+  enable_streaming_engine = true
+
+  # Optional overrides
+  max_workers             = try(each.value.config.job.max_workers, 1)
+  machine_type            = try(each.value.config.job.machine_type, "n1-standard-1")
+  ip_configuration        = "WORKER_IP_PRIVATE"
+  service_account_email   = var.service_account_id
+  on_delete               = "cancel"
+
+  depends_on = [ google_storage_bucket_object.template]
+}
+
