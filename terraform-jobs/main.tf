@@ -47,8 +47,8 @@ resource "google_dataflow_flex_template_job" "job" {
   enable_streaming_engine = true
 
   # Optional overrides
-  max_workers             = try(each.value.config.job.max_workers, 1)
-  machine_type            = try(each.value.config.job.machine_type, "n1-standard-1")
+  max_workers             =  1
+  machine_type            =  "n1-standard-1"
   ip_configuration        = "WORKER_IP_PRIVATE"
   service_account_email   = var.service_account_id
   on_delete               = "cancel"
