@@ -13,7 +13,7 @@
   },
   {
     "name": "dropoff_datetime",
-    "mode": "REQUIRED",
+    "mode": "NULLABLE",
     "type": "TIMESTAMP",
     "description": "timestamp of dropoff"
   },
