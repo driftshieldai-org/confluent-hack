@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-Time Anomalies</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
+        h1 { color: #333; }
+        
+        table { width: 100%; border-collapse: collapse; box-shadow: 0 0 10px rgba(0,0,0,0.1); background: white; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        
+        /* Flashing Animation Keyframes */
+        @keyframes flash {
+            0% { background-color: #ffeb3b; } /* Yellow highlight */
+            100% { background-color: white; }
+        }
+        
+        .flash-new {
+            animation: flash 2s ease-out;
+        }
+
+        .severity-high { color: #d9534f; font-weight: bold; }
+        .severity-medium { color: #f0ad4e; }
+        .severity-low { color: #5bc0de; }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Anomalies (Last 100)</h1>
+    <div id="status">Last updated: <span id="last-updated">Never</span></div>
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Metric</th>
+                <th>Severity</th>
+                <th>Vendor ID</th>
+                <th>Count</th>
+                <th>Score Details</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            <!-- Rows will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        // Store IDs or Timestamps of known rows to identify new ones
+        let knownRows = new Set();
+        const API_URL = '/api/anomalies'; // Update if backend URL differs
+
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                updateTable(data);
+                document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function updateTable(data) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = ''; // Clear current table
+
+            // New Set for the next iteration
+            const currentRows = new Set();
+
+            data.forEach(row => {
+                // Create a unique key for the row to track uniqueness (e.g., timestamp + vendor_id)
+                const uniqueKey = `${row.timestamp}-${row.vendor_id}-${row.metric}`;
+                currentRows.add(uniqueKey);
+
+                const tr = document.createElement('tr');
+                
+                // If we didn't know this row before, add the flash class
+                if (!knownRows.has(uniqueKey) && knownRows.size > 0) {
+                    tr.classList.add('flash-new');
+                }
+
+                tr.innerHTML = `
+                    <td>${new Date(row.timestamp).toLocaleString()}</td>
+                    <td>${row.metric}</td>
+                    <td class="severity-${row.severity.toLowerCase()}">${row.severity}</td>
+                    <td>${row.vendor_id}</td>
+                    <td>${row.count}</td>
+                    <td>${row.score_details || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update known rows for the next poll
+            knownRows = currentRows;
+        }
+
+        // Initial fetch
+        fetchData();
+
+        // Poll every 60 seconds (60000 ms)
+        setInterval(fetchData, 60000);
+    </script>
+</body>
+</html>
