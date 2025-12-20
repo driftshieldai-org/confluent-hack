@@ -46,3 +46,13 @@ variable "anomaly_summ_table" {
   type        = string
 }
 
+variable "bootstrap_servers" {
+  description = "Name of the bootstrap server of confluent"
+  type        = string
+}
+
+variable "kafka_topic" {
+  description = "Name of the kafka topic"
+  type        = string
+}
+
