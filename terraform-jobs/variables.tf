@@ -31,4 +31,28 @@ variable "service_account_id" {
   type        = string
 }
 
+variable "stream_table" {
+  description = "Name of the table used for streaming"
+  type        = string
+}
+
+variable "anomaly_table" {
+  description = "Name of the table used for storing anomalies"
+  type        = string
+}
+
+variable "anomaly_summ_table" {
+  description = "Name of the table used for storing anomalies summary"
+  type        = string
+}
+
+variable "bootstrap_servers" {
+  description = "Name of the bootstrap server of confluent"
+  type        = string
+}
+
+variable "kafka_topic" {
+  description = "Name of the kafka topic"
+  type        = string
+}
 

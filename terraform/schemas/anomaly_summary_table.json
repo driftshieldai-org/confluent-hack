@@ -1,0 +1,23 @@
+[
+  {
+    "name": "window_timestamp",
+    "mode": "REQUIRED",
+    "type": "TIMESTAMP",
+    "description": "Timestamp of window for anomalies are summarised"
+  },
+  {
+    "name": "summary_text",
+    "type": "STRING",
+    "description": "Anomalies summary"
+  },
+  {
+    "name": "anomaly_count",
+    "type": "INTEGER",
+    "description": "No of Anomalies detected"
+  },
+  {
+    "name": "raw_anomalies_json",
+    "type": "STRING",
+    "description": "anomaly detail in json format"
+  }
+]

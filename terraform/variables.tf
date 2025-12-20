@@ -40,3 +40,13 @@ variable "stream_table_id" {
   description = "Name of the table used for streaming"
   type        = string
 }
+
+variable "anomalies_table_id" {
+  description = "Name of the table used for storing anomalies"
+  type        = string
+}
+
+variable "anomalies_summ_table_id" {
+  description = "Name of the table used for storing anomalies summary"
+  type        = string
+}

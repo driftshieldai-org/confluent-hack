@@ -1,0 +1,60 @@
+{
+  "image": "us-central1-docker.pkg.dev/aipartnercatalyst-confluent-01/driftshield-ai-docker/dataflow:latest",
+  "sdk_info": {
+    "language": "PYTHON"
+  },
+  "metadata": {
+    "name": "Real-time Anomaly Detection",
+    "description": "A streaming pipeline to ingest data from confluent, write to BigQuery, and detect anomalies in real-time.",
+    "parameters": [
+      {
+        "name": "bootstrap_servers",
+        "label": "Input Kafka server",
+        "help_text": "Confluent Kafka bootstrap server(s) (format: host:port,host2:port2)",
+        "is_optional": false
+      },
+      {
+        "name": "kafka_topic",
+        "label": "Input kafka topic",
+        "help_text": "The kafka topic to read messages from.",
+        "is_optional": false
+      },
+      {
+        "name": "output_table",
+        "label": "Output BigQuery Table",
+        "help_text": "The BigQuery table for archival. Format: PROJECT:DATASET.TABLE",
+        "is_optional": false
+      },
+      {
+        "name": "model_dir",
+        "label": "GCS Path to Model Artifacts",
+        "help_text": "The GCS directory containing the trained model artifacts (e.g., gs://bucket/models/).",
+        "is_optional": false
+      },
+      {
+        "name": "anomaly_output_table",
+        "label": "Output BigQuery Table for anomaly",
+        "help_text": "The BigQuery table for anomaly detection. Format: PROJECT:DATASET.TABLE",
+        "is_optional": false
+      },
+      {
+        "name": "summary_output_table",
+        "label": "Output BigQuery Table for summary of anomaly",
+        "help_text": "BigQuery table to write Gemini summaries to, in the format PROJECT:DATASET.TABLE",
+        "is_optional": false
+      },
+      {
+        "name": "api_project",
+        "label": "Project id to be used for vertexai",
+        "help_text": "GCP project ID where the pipeline and Vertex AI are running.",
+        "is_optional": false
+      },
+      {
+        "name": "api_region",
+        "label": "region to be used for vertexai",
+        "help_text": "GCP region where the pipeline and Vertex AI are running.",
+        "is_optional": false
+      }
+    ]
+  }
+}
