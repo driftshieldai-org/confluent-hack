@@ -35,7 +35,8 @@ resource "google_dataflow_flex_template_job" "job" {
   staging_location        = "gs://${var.bucket_name}/dataflow/staging"
 
   parameters = {
-    input_subscription=projects/prj-vo-s-data-confluent-poc/subscriptions/test-sub,
+    bootstrap_servers=var.bootstrap_servers,
+    kafka_topic = var.kafka_topic,
     output_table=var.stream_table,
     model_dir="gs://${var.bucket_name}/models",
     anomaly_output_table=var.anomaly_table,
