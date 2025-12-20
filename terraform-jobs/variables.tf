@@ -56,3 +56,14 @@ variable "kafka_topic" {
   type        = string
 }
 
+variable "vpc_network" {
+  description = "Name of the VPC network"
+  type        = string
+}
+
+variable "subnet_name" {
+  description = "Name of vpc subnet"
+  type        = string
+}
+
+
