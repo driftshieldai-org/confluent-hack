@@ -28,6 +28,11 @@ resource "google_storage_bucket_object" "template" {
 resource "google_dataflow_flex_template_job" "job" {
   provider                = google-beta
   name                    = "driftshieldai-df-job-${formatdate("YYYYMMDD-hhmm", timestamp())}"
+
+  lifecycle {
+    ignore_changes = [name]
+  }
+
   region                  = var.region
   project                 = var.project_id
   container_spec_gcs_path = "gs://${var.bucket_name}/dataflow/template/realtime_stream_anomaly.json"
