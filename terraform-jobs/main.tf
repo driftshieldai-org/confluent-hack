@@ -30,7 +30,7 @@ resource "google_dataflow_flex_template_job" "job" {
   name                    = "driftshieldai-df-job-${formatdate("YYYYMMDD-hhmm", timestamp())}"
 
   lifecycle {
-    ignore_changes = [name,temp_location,staging_location,]
+    ignore_changes = [name,temp_location,staging_location,machine_type]
   }
 
   region                  = var.region
