@@ -199,7 +199,7 @@ jobs:
     if: |
       always() && 
       (needs.build-push-train.result == 'success' || needs.build-push-train.result == 'skipped') && 
-      (needs.build-push-dataflow.result == 'success' || needs.build-push-train.dataflow == 'skipped') && 
+      (needs.build-push-dataflow.result == 'success' || needs.build-push-dataflow.result == 'skipped') && 
       (needs.changes_check.outputs.terraform == 'true' || needs.changes_check.outputs.train == 'true' || needs.changes_check.outputs.dataflow == 'true')
     
     runs-on: ubuntu-latest
