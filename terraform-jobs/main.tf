@@ -58,3 +58,30 @@ resource "google_dataflow_flex_template_job" "job" {
  depends_on = [ google_storage_bucket_object.template]
 }
 
+resource "google_cloud_run_v2_service" "anomaly-ui" {
+  name     = var.cloudrun_name
+  location = var.region
+  project = var.project_id
+  ingress = "INGRESS_TRAFFIC_ALL"
+
+
+  template {
+    containers {
+      image = "us-central1-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.ui_image_name}:latest"
+      resources {
+        limits = {
+          cpu    = 1
+          memory = "512Mi"
+        }
+      }
+    }  
+    scaling {
+        max_instance_count = 1
+        min_instance_count = 0
+      }  
+    
+    
+    service_account = var.service_account_id 
+  }
+  
+}
