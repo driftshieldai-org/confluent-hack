@@ -3,12 +3,12 @@
     "name": "timestamp",
     "mode": "REQUIRED",
     "type": "TIMESTAMP",
-    "description": "The timestamp when the anomaly was generated.",
+    "description": "The timestamp when the anomaly was generated."
   },
   {
     "name": "Metric",
     "type": "STRING",
-    "description": "The type of anomaly detected (e.g., STATISTICAL_OUTLIER, NO_DATA_RECEIVED, UNKNOWN_VENDOR_ID).",
+    "description": "The type of anomaly detected (e.g., STATISTICAL_OUTLIER, NO_DATA_RECEIVED, UNKNOWN_VENDOR_ID)."
   },
   {
     "name": "severity",
