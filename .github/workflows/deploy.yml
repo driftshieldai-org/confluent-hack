@@ -11,6 +11,8 @@ env:
   GCP_REGION: us-central1
   GAR_REPO_NAME: driftshield-ai-docker
   TRAIN_IMAGE_NAME: vertexai-custom 
+  DATAFLOW_IMAGE_NAME: dataflow 
+  
 
 jobs:
   build-and-deploy:
@@ -85,6 +87,7 @@ jobs:
       # Expose the boolean 'true' or 'false' to other jobs
       train: ${{ steps.filter.outputs.train }}
       terraform: ${{ steps.filter.outputs.terraform }}
+      dataflow: ${{ steps.filter.outputs.dataflow }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -99,8 +102,10 @@ jobs:
               - 'train/**'
             terraform:
               - 'terraform-jobs/**'
+            dataflow:
+              - dataflow/**/*
       - name: Debug Output
-        run: echo "Changes detected in train? ${{ steps.filter.outputs.train }} \n Changes detected in terraform? ${{ steps.filter.outputs.terraform }}" 
+        run: echo "Changes detected in train? ${{ steps.filter.outputs.train }} \n Changes detected in terraform? ${{ steps.filter.outputs.terraform }} \n Changes detected in dataflow? ${{ steps.filter.outputs.dataflow }}" 
        
   build-push-train:
     name: 'Build & Push Docker Image'
@@ -145,13 +150,57 @@ jobs:
           docker push $IMAGE_TAG
           docker push $IMAGE_LATEST
 
+  build-push-dataflow:
+    name: 'Build & Push Docker Image for dataflow'
+    needs: [terraform, changes_check]  # Waits for Terraform to finish successfully
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && needs.changes_check.outputs.dataflow == 'true'
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate to Google Cloud
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # 2. Setup Cloud SDK (Required for docker auth)
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      # 3. Configure Docker to use gcloud as a credential helper
+      - name: Configure Docker Auth
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      # 4. Build and Push
+      - name: Build and Push Image
+        env:
+          # Format: REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME/IMAGE_NAME:TAG
+          IMAGE_TAG: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO_NAME }}/${{ env.DATAFLOW_IMAGE_NAME }}:${{ github.sha }}
+          IMAGE_LATEST: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO_NAME }}/${{ env.DATAFLOW_IMAGE_NAME }}:latest
+        run: |
+          echo "Building image: $IMAGE_TAG"
+          
+          # Build the image from the 'dataflow/src' folder
+          docker build -t $IMAGE_TAG -t $IMAGE_LATEST ./dataflow/src
+          
+          echo "Pushing image to Artifact Registry..."
+          docker push $IMAGE_TAG
+          docker push $IMAGE_LATEST
+
   terraform-jobs:
     name: 'Terraform-job'
-    needs: [changes_check, build-push-train]
+    needs: [changes_check, build-push-train,build-push-dataflow]
     if: |
       always() && 
       (needs.build-push-train.result == 'success' || needs.build-push-train.result == 'skipped') && 
-      (needs.changes_check.outputs.terraform == 'true' || needs.changes_check.outputs.train == 'true')
+      (needs.build-push-dataflow.result == 'success' || needs.build-push-train.dataflow == 'skipped') && 
+      (needs.changes_check.outputs.terraform == 'true' || needs.changes_check.outputs.train == 'true' || needs.changes_check.outputs.dataflow == 'true')
     
     runs-on: ubuntu-latest
 
