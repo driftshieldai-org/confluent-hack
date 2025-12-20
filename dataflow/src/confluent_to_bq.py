@@ -456,11 +456,11 @@ def run(argv=None):
     # The pipeline options will be automatically parsed from the command line
     known_args, pipeline_args = parser.parse_known_args(argv)
 
-	pipeline_args.extend([
+    pipeline_args.extend([
       '--runner=DataflowRunner',
       '--experiments=use_runner_v2',  # Required for Cross-Language transforms
       '--streaming'
-  ])
+	])
 
     pipeline_options = PipelineOptions(pipeline_args)
     
