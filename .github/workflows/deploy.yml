@@ -242,7 +242,7 @@ jobs:
 
   terraform-jobs:
     name: 'Terraform-job'
-    needs: [changes_check, build-push-train,build-push-dataflow]
+    needs: [changes_check, build-push-train,build-push-dataflow,build-push-uicr]
     if: |
       always() && 
       (needs.build-push-train.result == 'success' || needs.build-push-train.result == 'skipped') && 
