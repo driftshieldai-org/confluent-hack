@@ -1,0 +1,38 @@
+[
+  {
+    "name": "timestamp",
+    "mode": "REQUIRED",
+    "type": "TIMESTAMP",
+    "description": "The timestamp when the anomaly was generated.",
+  },
+  {
+    "name": "Metric",
+    "type": "STRING",
+    "description": "The type of anomaly detected (e.g., STATISTICAL_OUTLIER, NO_DATA_RECEIVED, UNKNOWN_VENDOR_ID).",
+  },
+  {
+    "name": "severity",
+    "type": "STRING",
+    "description": "The severity of the anomaly (low, medium, or high)."
+  },
+  {
+    "name": "vendor_id",
+    "type": "STRING",
+    "description": "The vendor ID associated with the anomalous event."
+  },
+  {
+    "name": "count",
+    "type": "INTEGER",
+    "description": "The record count within the one-minute window that triggered the anomaly."
+  },
+  {
+    "name": "score",
+    "type": "FLOAT",
+    "description": "The raw anomaly score from the model. For Isolation Forest, lower scores are more anomalous."
+  },
+  {
+    "name": "details",
+    "type": "STRING",
+    "description": "A JSON string containing additional context, such as real-time feature values and training baselines."
+  }
+]
