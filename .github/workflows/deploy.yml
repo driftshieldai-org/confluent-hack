@@ -12,6 +12,7 @@ env:
   GAR_REPO_NAME: driftshield-ai-docker
   TRAIN_IMAGE_NAME: vertexai-custom 
   DATAFLOW_IMAGE_NAME: dataflow 
+  RUNUI_IMAGE_NAME: anomalyui
   
 
 jobs:
@@ -88,6 +89,7 @@ jobs:
       train: ${{ steps.filter.outputs.train }}
       terraform: ${{ steps.filter.outputs.terraform }}
       dataflow: ${{ steps.filter.outputs.dataflow }}
+      uicr: ${{ steps.filter.outputs.uicr }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -104,8 +106,10 @@ jobs:
               - 'terraform-jobs/**'
             dataflow:
               - dataflow/**/*
+            uicr:
+              - run-ui/**/*
       - name: Debug Output
-        run: echo "Changes detected in train? ${{ steps.filter.outputs.train }} \n Changes detected in terraform? ${{ steps.filter.outputs.terraform }} \n Changes detected in dataflow? ${{ steps.filter.outputs.dataflow }}" 
+        run: echo "Changes detected in train? ${{ steps.filter.outputs.train }} \n Changes detected in terraform? ${{ steps.filter.outputs.terraform }} \n Changes detected in dataflow? ${{ steps.filter.outputs.dataflow }} \n Changes detected in UI-CR? ${{ steps.filter.outputs.uicr }}" 
        
   build-push-train:
     name: 'Build & Push Docker Image'
@@ -188,6 +192,49 @@ jobs:
           
           # Build the image from the 'dataflow/src' folder
           docker build -t $IMAGE_TAG -t $IMAGE_LATEST ./dataflow/src
+          
+          echo "Pushing image to Artifact Registry..."
+          docker push $IMAGE_TAG
+          docker push $IMAGE_LATEST
+
+  build-push-uicr:
+    name: 'Build & Push Docker Image for UI CLOUD RUN Service'
+    needs: [terraform, changes_check]  # Waits for Terraform to finish successfully
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && needs.changes_check.outputs.uicr == 'true'
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate to Google Cloud
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # 2. Setup Cloud SDK (Required for docker auth)
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      # 3. Configure Docker to use gcloud as a credential helper
+      - name: Configure Docker Auth
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      # 4. Build and Push
+      - name: Build and Push Image
+        env:
+          # Format: REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME/IMAGE_NAME:TAG
+          IMAGE_TAG: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO_NAME }}/${{ env.DATAFLOW_IMAGE_NAME }}:${{ github.sha }}
+          IMAGE_LATEST: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO_NAME }}/${{ env.RUNUI_IMAGE_NAME }}:latest
+        run: |
+          echo "Building image: $IMAGE_TAG"
+          
+          # Build the image from the 'run-ui' folder
+          docker build -t $IMAGE_TAG -t $IMAGE_LATEST ./run-ui
           
           echo "Pushing image to Artifact Registry..."
           docker push $IMAGE_TAG
