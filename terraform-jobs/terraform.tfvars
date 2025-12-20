@@ -8,3 +8,5 @@ service_account_id = "driftshieldai-sa@aipartnercatalyst-confluent-01.iam.gservi
 stream_table      = "aipartnercatalyst-confluent-01.driftshield_ai_dataset.trip_data_2025"   
 anomaly_table = "aipartnercatalyst-confluent-01.driftshield_ai_dataset.real_time_anomalies"
 anomaly_summ_table = "aipartnercatalyst-confluent-01.driftshield_ai_dataset.anomaly_summary_table"
+bootstrap_servers=""
+kafka_topic = ""
