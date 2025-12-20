@@ -1,5 +1,6 @@
 FROM gcr.io/dataflow-templates-base/python310-template-launcher-base
 
+
 ENV FLEX_TEMPLATE_PYTHON_PY_FILE="/template/pubsub_to_bq.py"
 
 COPY . /template/
