@@ -15,6 +15,22 @@ import os
 from datetime import datetime, timedelta, timezone # Import timezone
 import vertexai
 from vertexai.generative_models import GenerativeModel
+from google.cloud import secretmanager
+
+
+def get_secret(project_id, secret_id, version_id="latest"):
+    """
+    Fetches a secret from Google Secret Manager.
+    """
+    client = secretmanager.SecretManagerServiceClient()
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
+    
+    try:
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode("UTF-8")
+    except Exception as e:
+        logging.error(f"Failed to access secret {secret_id}: {e}")
+        raise
 
 
 class ParseKafkaMessage(beam.DoFn):
@@ -508,13 +524,27 @@ def run(argv=None):
         ]
     }
 
+    api_key = get_secret(known_args.project_id, 'KAFKA_KEY')
+    api_secret = get_secret(known_args.project_id, 'KAFKA_SECRET')
+    sasl_jaas_config = (
+        f'org.apache.kafka.common.security.plain.PlainLoginModule required '
+        f'username="{api_key}" '
+        f'password="{api_secret}";'
+    )
+    kafka_consumer_config = {
+        'bootstrap.servers': known_args.bootstrap_servers,
+        'security.protocol': 'SASL_SSL',
+        'sasl.mechanism': 'PLAIN',
+        'sasl.jaas.config': sasl_jaas_config,
+        'ssl.endpoint.identification.algorithm': 'https'
+    }
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
         # 1. Read from Pub/Sub, parse, and assign event timestamps
         messages_with_ts = (
             pipeline
             | 'ReadFromKafka' >> ReadFromKafka(
-                consumer_config={'bootstrap.servers': known_args.bootstrap_servers},
+                consumer_config=kafka_consumer_config,
                 topics=[known_args.kafka_topic],
                 with_metadata=True
             )
