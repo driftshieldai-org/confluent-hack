@@ -91,23 +91,30 @@ resource "google_logging_metric" "anomaly_summary_count" {
   filter = <<-EOT
    # resource.type="dataflow_step"
     resource.type="cloud_run_revision"
-    jsonPayload.identifier="anomaly_summary"
+    #jsonPayload.identifier="anomaly_summary"
+    textPayload =~ "anomaly_summary"
   EOT
 
   metric_descriptor {
     metric_kind = "DELTA"
     value_type  = "INT64"
     unit        = "1"
-    labels {
+     labels {
       key         = "anomaly_count"
-      value_type  = "INT64"
-      description = "The number of raw anomalies included in the summary."
+      value_type  = "STRING" # Extractors always return strings/regex matches
+      description = "The number of raw anomalies."
+    }
+    labels {
+      key         = "summary"
+      value_type  = "STRING"
+      description = "The summary text."
     }
   }
 
   label_extractors = {
-    # This extracts the 'anomaly_count' from the log's JSON payload and makes it a metric label.
-    "anomaly_count" = "EXTRACT(jsonPayload.anomaly_count)"
+    # We use REGEX to pull the values out of the textPayload string
+    "anomaly_count" = "REGEXP_EXTRACT(textPayload, \"\\\"anomaly_count\\\": (\\d+)\")"
+    "summary"       = "REGEXP_EXTRACT(textPayload, \"\\\"summary\\\": \\\"(.*?)\\\"\")"
   }
 }
 
@@ -141,7 +148,7 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
       # This means an alert will fire for each summary generated.
       comparison      = "COMPARISON_GT"
       threshold_value = 0
-      duration        = "60s" # 1 minutes
+      duration        = "0s" # 1 minutes
 
       trigger {
         count = 1
@@ -162,11 +169,14 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
       ## Anomaly Summary Detected
       A new set of anomalies has been summarized by the real-time Dataflow pipeline.
       
-      Summary from Gemini:
-      $${log.extracted_label.summary}
+     ## Summary from Gemini:
+     ## $${log.extracted_label.summary}
 
-      Number of Anomalies:
-      $${log.extracted_label.anomaly_count}
+     ## Number of Anomalies:
+      ##$${log.extracted_label.anomaly_count}
+
+      **Summary:** $${metric.label.summary}
+      **Number of Anomalies:** $${metric.label.anomaly_count}
 
       Action:
       Please review the summary and check the 'real_time_anomalies' and 'gemini_summaries' BigQuery tables for more details.
