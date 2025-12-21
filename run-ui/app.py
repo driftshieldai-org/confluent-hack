@@ -5,9 +5,10 @@ from google.cloud import bigquery
 from flask_cors import CORS
 import logging
 
+logging.basicConfig(level=logging.INFO)
+
 app = Flask(__name__)
-# Enable CORS so your UI can fetch data if hosted separately;
-# not strictly necessary if serving static files from the same app.
+
 CORS(app)
 
 # Load configuration
@@ -54,6 +55,12 @@ def get_anomalies():
                 "score": row["score"],
                 "details": row["details"]
             })
+        
+        logging.info(json.dumps({
+            "identifier": "anomaly_summary",
+            "summary": "testing mail",
+            "anomaly_count": len(results) # I suggest using len(results) to make it accurate
+        }))
         
         return jsonify(results), 200
     except Exception as e:
