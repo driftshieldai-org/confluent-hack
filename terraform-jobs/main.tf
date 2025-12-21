@@ -90,6 +90,7 @@ resource "google_logging_metric" "anomaly_summary_count" {
   # It looks for logs from Dataflow steps that have the correct identifier in their JSON payload.
   filter = <<-EOT
    # resource.type="dataflow_step"
+    resource.type="cloud_run_revision"
     jsonPayload.identifier="anomaly_summary"
   EOT
 
