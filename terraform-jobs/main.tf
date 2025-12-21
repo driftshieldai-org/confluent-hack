@@ -135,6 +135,7 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
   project      = var.project_id
   display_name = "New Anomaly Summary Detected in Dataflow"
   combiner     = "OR"
+  severity = "WARNING"
 
   conditions {
     display_name = "A new anomaly summary log was detected"
@@ -159,6 +160,12 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
   notification_channels = [
     google_monitoring_notification_channel.email_channel.id,
   ]
+
+  alert_strategy {
+    # This closes the incident if the metric stops reporting for a period
+    auto_close = "30s" # 30 seconds
+    notification_prompts = []
+  }
 
   # Documentation that will be included in the alert notification.
   # This helps the person receiving the alert understand what's happening.
