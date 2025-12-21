@@ -172,7 +172,7 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
   alert_strategy {
     # This closes the incident if the metric stops reporting for a period
     auto_close = "1800s" # 30 Minutes
-    notification_prompts = []
+    notification_prompts = ["OPENED"]
   }
 
   # Documentation that will be included in the alert notification.
