@@ -144,15 +144,23 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
       # This filter points to the log-based metric we created above.
      # filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.anomaly_summary_count.name}\" AND resource.type=\"dataflow_step\""
        filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.anomaly_summary_count.name}\" AND resource.type=\"cloud_run_revision\""      
-      # This condition will trigger if the count is greater than 0 over a 5-minute period.
+      # This condition will trigger if the count is greater than 0 
       # This means an alert will fire for each summary generated.
       comparison      = "COMPARISON_GT"
       threshold_value = 0
-      duration        = "0s" # 1 minutes
+      duration        = "0s" # immediate
 
       trigger {
         count = 1
       }
+      aggregations {
+        # Reduce to 60s (minimum) to make the incident "window" very small
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_COUNT"
+      }
+
+      This closes the incident when no log is present in the 60s window
+      evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
     }
   }
 
@@ -163,7 +171,7 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
 
   alert_strategy {
     # This closes the incident if the metric stops reporting for a period
-    auto_close = "30s" # 30 seconds
+    auto_close = "1800s" # 30 Minutes
     notification_prompts = []
   }
 
