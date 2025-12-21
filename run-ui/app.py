@@ -3,6 +3,7 @@ import configparser
 from flask import Flask, jsonify, render_template
 from google.cloud import bigquery
 from flask_cors import CORS
+import logging
 
 app = Flask(__name__)
 # Enable CORS so your UI can fetch data if hosted separately;
@@ -53,9 +54,16 @@ def get_anomalies():
                 "score": row["score"],
                 "details": row["details"]
             })
+        logging.info(json.dumps({
+                "identifier": "anomaly_summary",
+                "summary": "testing mail",
+                "anomaly_count": 1
+            }))
+        
         return jsonify(results), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
+    logging.getLogger().setLevel(logging.INFO)
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
