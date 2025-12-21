@@ -4,6 +4,7 @@ from flask import Flask, jsonify, render_template
 from google.cloud import bigquery
 from flask_cors import CORS
 import logging
+import json
 
 logging.basicConfig(level=logging.INFO)
 
