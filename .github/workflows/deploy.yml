@@ -90,6 +90,7 @@ jobs:
       terraform: ${{ steps.filter.outputs.terraform }}
       dataflow: ${{ steps.filter.outputs.dataflow }}
       uicr: ${{ steps.filter.outputs.uicr }}
+      terraformtrain: ${{ steps.filter.outputs.terraformtrain }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -108,11 +109,13 @@ jobs:
               - dataflow/**/*
             uicr:
               - run-ui/**/*
+            terraformtrain:
+              - 'terraform-training/**'
       - name: Debug Output
-        run: echo "Changes detected in train? ${{ steps.filter.outputs.train }} \n Changes detected in terraform? ${{ steps.filter.outputs.terraform }} \n Changes detected in dataflow? ${{ steps.filter.outputs.dataflow }} \n Changes detected in UI-CR? ${{ steps.filter.outputs.uicr }}" 
+        run: echo -e "Changes detected in train? ${{ steps.filter.outputs.train }} \n Changes detected in terraform? ${{ steps.filter.outputs.terraform }} \n Changes detected in dataflow? ${{ steps.filter.outputs.dataflow }} \n Changes detected in UI-CR? ${{ steps.filter.outputs.uicr }} \n Changes detected in terraform-train? ${{ steps.filter.outputs.terraformtrain }}" 
        
   build-push-train:
-    name: 'Build & Push Docker Image'
+    name: 'Build & Push Docker Image for training'
     needs: [terraform, changes_check]  # Waits for Terraform to finish successfully
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && needs.changes_check.outputs.train == 'true'
@@ -242,13 +245,12 @@ jobs:
 
   terraform-jobs:
     name: 'Terraform-job'
-    needs: [changes_check, build-push-train,build-push-dataflow,build-push-uicr]
+    needs: [changes_check,build-push-dataflow,build-push-uicr]
     if: |
       always() && 
-      (needs.build-push-train.result == 'success' || needs.build-push-train.result == 'skipped') && 
       (needs.build-push-dataflow.result == 'success' || needs.build-push-dataflow.result == 'skipped') && 
       (needs.build-push-uicr.result == 'success' || needs.build-push-uicr.result == 'skipped') &&
-      (needs.changes_check.outputs.terraform == 'true' || needs.changes_check.outputs.train == 'true' || needs.changes_check.outputs.dataflow == 'true' || needs.changes_check.outputs.uicr == 'true')
+      (needs.changes_check.outputs.terraform == 'true' || needs.changes_check.outputs.dataflow == 'true' || needs.changes_check.outputs.uicr == 'true')
     
     runs-on: ubuntu-latest
 
@@ -279,6 +281,60 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
+
+      # 3. Initialize (Downloads providers and configures Backend)
+      - name: Terraform Init
+        run: terraform init
+
+      # 4. Validate (Checks syntax)
+      - name: Terraform Validate
+        run: terraform validate
+
+      # 5. Plan (Preview changes)
+      - name: Terraform Plan
+        run: terraform plan -input=false
+
+      # 6. Apply (Create resources)
+      # Only runs on main branch push
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
+
+  terraform-train:
+    name: 'Terraform-train'
+    needs: [changes_check, build-push-train]
+    if: |
+      always() && 
+      (needs.build-push-train.result == 'success' || needs.build-push-train.result == 'skipped') && 
+      (needs.changes_check.outputs.terraformtrain == 'true' || needs.changes_check.outputs.train == 'true' )
+    
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+      
+    # Use the terraform folder
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform-training
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate to Google Cloud
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # 2. Install Terraform 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
