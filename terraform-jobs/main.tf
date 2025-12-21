@@ -111,8 +111,9 @@ resource "google_logging_metric" "anomaly_summary_count" {
 
   label_extractors = {
     # We use REGEX to pull the values out of the textPayload string
-    "anomaly_count" = "REGEXP_EXTRACT(textPayload, \"\\\\\"anomaly_count\\\\\": (\\\\d+)\")"
-    "summary"       = "REGEXP_EXTRACT(textPayload, \"\\\\\"summary\\\\\": \\\\\"(.*?)\\\\\"\")"
+    "anomaly_count" = "REGEXP_EXTRACT(textPayload, '\"anomaly_count\": (\\d+)')"
+    "summary"       = "REGEXP_EXTRACT(textPayload, '\"summary\": \"(.*?)\"')"
+  
   }
 }
 
