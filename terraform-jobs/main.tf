@@ -148,7 +148,7 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
       # This means an alert will fire for each summary generated.
       comparison      = "COMPARISON_GT"
       threshold_value = 0
-      duration        = "0s" # immediate
+      duration        = "60s" # immediate
 
       trigger {
         count = 1
