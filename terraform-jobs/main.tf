@@ -155,24 +155,23 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
 
   # Documentation that will be included in the alert notification.
   # This helps the person receiving the alert understand what's happening.
+  
   documentation {
-    content = <<-EOT
+    content   = <<-EOT
       ## Anomaly Summary Detected
-
       A new set of anomalies has been summarized by the real-time Dataflow pipeline.
+      
+      Summary from Gemini:
+      $${log.extracted_label.summary}
 
-      **Summary from Gemini:**
-      ${json.payload.summary}
+      Number of Anomalies:
+      $${log.extracted_label.anomaly_count}
 
-      **Number of Anomalies:**
-      ${json.payload.anomaly_count}
-
-      **Action:**
+      Action:
       Please review the summary and check the 'real_time_anomalies' and 'gemini_summaries' BigQuery tables for more details.
     EOT
     mime_type = "text/markdown"
   }
-
   user_labels = {
     "service"    = "dataflow-anomaly-detection",
     "created-by" = "terraform"
