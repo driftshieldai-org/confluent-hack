@@ -135,7 +135,7 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
     condition_threshold {
       # This filter points to the log-based metric we created above.
      # filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.anomaly_summary_count.name}\" AND resource.type=\"dataflow_step\""
-       filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.anomaly_summary_count.name}\""      
+       filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.anomaly_summary_count.name}\" AND resource.type=\"cloud_run_revision\""      
       # This condition will trigger if the count is greater than 0 over a 5-minute period.
       # This means an alert will fire for each summary generated.
       comparison      = "COMPARISON_GT"
