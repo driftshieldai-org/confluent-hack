@@ -156,7 +156,7 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
       aggregations {
         # Reduce to 60s (minimum) to make the incident "window" very small
         alignment_period   = "60s"
-        per_series_aligner = "ALIGN_SUM"
+        per_series_aligner = "ALIGN_RATE"
       }
 
       # This closes the incident when no log is present in the 60s window
