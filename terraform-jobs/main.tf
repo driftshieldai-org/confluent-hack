@@ -159,7 +159,7 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
         per_series_aligner = "ALIGN_COUNT"
       }
 
-      This closes the incident when no log is present in the 60s window
+      # This closes the incident when no log is present in the 60s window
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
     }
   }
