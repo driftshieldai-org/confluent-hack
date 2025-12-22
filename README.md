@@ -6,7 +6,7 @@ Driftshield AI is an end-to-end anomaly detection and monitoring platform. It in
 Driftshield AI follows a modern Serverless Event-Driven Architecture on Google Cloud Platform. It is designed to handle high-velocity streaming data with real-time AI intervention.
 
 **🔄 Data Flow Overview:**  
-Ingestion → 2. Processing → 3. AI Enrichment → 4. Storage → 5. Visualization
+Ingestion → 2. Processing → 3. AI Enrichment and Mail alert → 4. Storage → 5. Visualization
 
 **🧱 Core Components:**  
 1. Streaming Ingestion (Confluent Cloud):  
@@ -90,12 +90,11 @@ The project uses GitHub Actions (Driftshield Deploy) to automate infrastructure 
 5. Terraform Training: Triggers or updates Vertex AI training configurations.  
 
 **🛠 Setup & Requirements**
-1. Google Cloud Platform Setup
+1. Google Cloud Platform Setup:
 * Create a GCP Project.
 * Create a Service Account with necessary permissions.
-2. GitHub Secrets
+2. GitHub Secrets:  
 Navigate to your repository Settings > Secrets and variables > Actions and add the following:
-
 Secret Name	Description
 * GCP_PROJECT_ID:	Google Cloud Project ID
 * GCP_SA_KEY:	The JSON key of Google Cloud Service Account
@@ -108,6 +107,7 @@ The Dataflow pipeline handles:
 * Windowing and transformation.
 * Integration with Gemini AI to analyze data patterns and generate natural language summaries of detected anomalies.
 * Output to BigQuery.
+  
 2. Cloud Run UI:  
 A containerized service located in run-ui/ that queries BigQuery to provide a real-time visual representation of the "Driftshield" protection status and anomaly logs.
 
