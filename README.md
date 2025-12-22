@@ -59,9 +59,7 @@ The project is split into three Terraform layers to ensure stability and modular
 [ Cloud Run UI ]  [ Vertex AI Training ]
  (Live Dashboard)   (Model Re-tuning) </pre>
 
-
-# 🚀 CI/CD Pipeline Overview:
-The project uses GitHub Actions (Driftshield Deploy) to automate infrastructure and application deployment. The pipeline is designed to be "change-aware," meaning it only builds and deploys components that have modified files.
+# 📁 Repository Structure
 
 <pre> .
 ├── .github/
@@ -76,6 +74,10 @@ The project uses GitHub Actions (Driftshield Deploy) to automate infrastructure 
 ├── terraform-training/        # AI Infra (Vertex AI Training Jobs)
 ├── train/                      # ML Model training logic & Dockerfile
 └── README.md </pre>
+
+
+# 🚀 CI/CD Pipeline Overview:
+The project uses GitHub Actions (Driftshield Deploy) to automate infrastructure and application deployment. The pipeline is designed to be "change-aware," meaning it only builds and deploys components that have modified files.
 
 **Pipeline Stages:**  
   
