@@ -1,109 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Real-Time Anomalies</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-        h1 { color: #333; }
-        
-        table { width: 100%; border-collapse: collapse; box-shadow: 0 0 10px rgba(0,0,0,0.1); background: white; }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-        th { background-color: #007bff; color: white; }
-        
-        /* Flashing Animation Keyframes */
-        @keyframes flash {
-            0% { background-color: #ffeb3b; } /* Yellow highlight */
-            100% { background-color: white; }
-        }
-        
-        .flash-new {
-            animation: flash 5s ease-out;
-        }
-
-        .severity-high { color: #d9534f; font-weight: bold; }
-        .severity-medium { color: #f0ad4e; }
-        .severity-low { color: #5bc0de; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-Time Anomaly Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes flash-bg {
+      0% { background-color: rgba(74, 222, 128, 0.2); } /* green-400 with 20% opacity */
+      100% { background-color: transparent; }
+    }
+    .animate-flash {
+      animation: flash-bg 2s ease-out;
+    }
+    /* For scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1f2937; /* bg-gray-800 */
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #4b5563; /* bg-gray-600 */
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #6b7280; /* bg-gray-500 */
+    }
+  </style>
 </head>
-<body>
-    <h1>Real-Time Anomalies (Last 100)</h1>
-    <div id="status">Last updated: <span id="last-updated">Never</span></div>
-    <br>
-    <table>
-        <thead>
-            <tr>
-                <th>Timestamp</th>
-                <th>Metric</th>
-                <th>Severity</th>
-                <th>Vendor ID</th>
-                <th>Count</th>
-                <th>Score</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody id="table-body">
-            <!-- Rows will be inserted here -->
-        </tbody>
-    </table>
-
-    <script>
-        // Store IDs or Timestamps of known rows to identify new ones
-        let knownRows = new Set();
-        const API_URL = '/api/anomalies'; // Update if backend URL differs
-
-        async function fetchData() {
-            try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-                
-                updateTable(data);
-                document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        }
-
-        function updateTable(data) {
-            const tbody = document.getElementById('table-body');
-            tbody.innerHTML = ''; // Clear current table
-
-            // New Set for the next iteration
-            const currentRows = new Set();
-
-            data.forEach(row => {
-                // Create a unique key for the row to track uniqueness (e.g., timestamp + vendor_id)
-                const uniqueKey = `${row.timestamp}-${row.vendor_id}-${row.metric}`;
-                currentRows.add(uniqueKey);
-
-                const tr = document.createElement('tr');
-                
-                // If we didn't know this row before, add the flash class
-                if (!knownRows.has(uniqueKey) && knownRows.size > 0) {
-                    tr.classList.add('flash-new');
-                }
-
-                tr.innerHTML = `
-                    <td>${new Date(row.timestamp).toLocaleString()}</td>
-                    <td>${row.metric}</td>
-                    <td class="severity-${row.severity.toLowerCase()}">${row.severity}</td>
-                    <td>${row.vendor_id}</td>
-                    <td>${row.count}</td>
-                    <td>${row.score}</td>
-                    <td>${row.details || ''}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            // Update known rows for the next poll
-            knownRows = currentRows;
-        }
-
-        // Initial fetch
-        fetchData();
-
-        // Poll every 60 seconds (60000 ms)
-        setInterval(fetchData, 60000);
-    </script>
+<body class="bg-gray-900 text-gray-200 antialiased">
+  <div id="root"></div>
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.3.1",
+        "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+        "@google/genai": "https://esm.sh/@google/genai"
+      }
+    }
+  </script>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>
