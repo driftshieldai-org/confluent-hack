@@ -1,4 +1,5 @@
 project_id    = "aipartnercatalyst-confluent-01"   
+train_project_id    = "aipartnercatalyst-confluent-02"  
 region        = "us-central1"
 bucket_name   = "aipartnercatalyst-confluent-bucket"
 gar_repo_name = "driftshield-ai-docker"
