@@ -4,3 +4,5 @@ google-cloud-storage
 google-cloud-bigquery
 google-cloud-aiplatform
 google-cloud-secret-manager
+google-api-python-client
+google-auth
