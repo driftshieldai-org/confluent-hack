@@ -18,4 +18,3 @@ resource "null_resource" "submit_vertex_job" {
     EOT
   }
 }
-
