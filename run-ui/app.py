@@ -4,7 +4,6 @@ from flask import Flask, jsonify, render_template
 from google.cloud import bigquery
 from flask_cors import CORS
 import logging
-import json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -56,13 +55,7 @@ def get_anomalies():
                 "score": row["score"],
                 "details": row["details"]
             })
-        
-        logging.info(json.dumps({
-            "identifier": "anomaly_summary",
-            "summary": "testing mail",
-            "anomaly_count": len(results) # I suggest using len(results) to make it accurate
-        }))
-        
+                
         return jsonify(results), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
