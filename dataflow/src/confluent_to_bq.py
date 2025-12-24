@@ -496,7 +496,7 @@ class SummarizeAnomaliesWithGeminiFn(beam.DoFn):
             # SEND EMAIL IMMEDIATELY
             if self.gmail_service:
                 try:
-					anomaly_count = len(anomaly_list)
+                    anomaly_count = len(anomaly_list)
                     subject = f"Anomalies Alert: {anomaly_count} Anomalies Detected"
                     
                     message = MIMEText(summary_text)
