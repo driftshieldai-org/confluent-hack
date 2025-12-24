@@ -107,3 +107,18 @@ resource "google_compute_subnetwork" "subnet" {
   network       = google_compute_network.vpc_network.id
   private_ip_google_access = true
 }
+
+resource "google_service_account" "gcp_train_sa" {
+  account_id   = "driftshieldai-sa"
+  project      = var.train_project_id
+  display_name = "driftshieldai Service Account for training"
+  description  = "Service account used in driftshieldai application"
+}
+
+resource "google_project_iam_member" "sa_roles" {
+  for_each = toset(["roles/artifactregistry.reader","roles/bigquery.dataViewer","roles/bigquery.jobUser","roles/bigquery.readSessionUser","roles/storage.objectUser","roles/storage.bucketViewer"])
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.gcp_sa.email}"
+}
+
