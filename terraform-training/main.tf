@@ -1,11 +1,11 @@
 resource "null_resource" "submit_vertex_job" {
   # Trigger the job whenever the container image digest changes
-  triggers = {
-    dir_sha = sha256(join("", [
-      for f in fileset("${path.module}/../train", "**") : 
-      filesha256("${path.module}/../train/${f}")
-    ]))
-  }
+  #triggers = {
+  #  dir_sha = sha256(join("", [
+  #    for f in fileset("${path.module}/../train", "**") : 
+  #    filesha256("${path.module}/../train/${f}")
+  #  ]))
+  #}
 
   provisioner "local-exec" {
     command = <<EOT
