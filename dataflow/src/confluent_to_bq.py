@@ -491,7 +491,6 @@ def run(argv=None):
 
 
     # Define the BigQuery table schema
-    # This must match the structure of the JSON messages from Pub/Sub
     table_schema = {
         'fields': [
             {'name': 'vendor_id', 'type': 'STRING', 'mode': 'NULLABLE'},
@@ -542,7 +541,7 @@ def run(argv=None):
     }
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
-        # 1. Read from Pub/Sub, parse, and assign event timestamps
+        # 1. Read from Confluent, parse, and assign event timestamps
         messages_with_ts = (
             pipeline
             | 'ReadFromKafka' >> ReadFromKafka(
@@ -563,101 +562,101 @@ def run(argv=None):
 
         # Construct full paths to the specific model directories
         # Ensure the base path ends with a slash for proper joining
-#        base_model_dir = known_args.model_dir if known_args.model_dir.endswith('/') else known_args.model_dir + '/'
-#        vendor_model_path = os.path.join(base_model_dir, 'record_count_by_vendor/')
-#        null_count_model_path = os.path.join(base_model_dir, 'null_dropoff_global/')
-#
-#        # 2. BRANCH 1: Perform real-time anomaly detection for record count per vendor
- #       vendor_anomalies = (
- #           messages_with_ts
- #           # Group into 1-minute fixed windows
-  #          | 'WindowIntoMinutes' >> beam.WindowInto(beam.window.FixedWindows(60))
-#
- #           # Create (vendor_id, 1) pairs for counting
-  #          | 'MapVendorToCount' >> beam.Map(lambda msg: (msg['vendor_id'], 1))
+        base_model_dir = known_args.model_dir if known_args.model_dir.endswith('/') else known_args.model_dir + '/'
+        vendor_model_path = os.path.join(base_model_dir, 'record_count_by_vendor/')
+        null_count_model_path = os.path.join(base_model_dir, 'null_dropoff_global/')
+
+        # 2. BRANCH 1: Perform real-time anomaly detection for record count per vendor
+        vendor_anomalies = (
+            messages_with_ts
+            # Group into 1-minute fixed windows
+            | 'WindowIntoMinutes' >> beam.WindowInto(beam.window.FixedWindows(60))
+
+            # Create (vendor_id, 1) pairs for counting
+            | 'MapVendorToCount' >> beam.Map(lambda msg: (msg['vendor_id'], 1))
             
-   #         # Count records per vendor per minute window
-    #        | 'CountPerMinute' >> beam.CombinePerKey(sum)
-     #       
-      #      # Add the window timestamp to the element for stateful processing
-       #     | 'AddWindowTimestamp' >> beam.Map(
-       #         lambda kv, win=beam.DoFn.WindowParam: (kv[0], (int(win.end), kv[1]))
-        #    )
+            # Count records per vendor per minute window
+            | 'CountPerMinute' >> beam.CombinePerKey(sum)
             
-        #    | 'ResultToGlobal' >> beam.WindowInto(beam.window.GlobalWindows())
+            # Add the window timestamp to the element for stateful processing
+            | 'AddWindowTimestamp' >> beam.Map(
+                lambda kv, win=beam.DoFn.WindowParam: (kv[0], (int(win.end), kv[1]))
+            )
             
-   #         # Detect anomalies using the stateful DoFn
-   #         | 'DetectVendorAnomalies' >> beam.ParDo(DetectVendorAnomaliesDoFn(vendor_model_path))
-   #     )
+            | 'ResultToGlobal' >> beam.WindowInto(beam.window.GlobalWindows())
+            
+            # Detect anomalies using the stateful DoFn
+            | 'DetectVendorAnomalies' >> beam.ParDo(DetectVendorAnomaliesDoFn(vendor_model_path))
+        )
         
-   #     # 3. BRANCH 2: Perform real-time anomaly detection for global null dropoff_datetime count
-   #     null_count_anomalies = (
-   #         messages_with_ts
-   #         | 'FilterNullDropoff' >> beam.Filter(lambda msg: msg.get('dropoff_datetime') is None)
-   #         
-   #         # Group into 1-minute fixed windows
-   #         | 'WindowNullsIntoMinutes' >> beam.WindowInto(beam.window.FixedWindows(60))
-#
- #           # Create ('global_null_dropoff', 1) pairs for counting
- #           | 'MapNullToCount' >> beam.Map(lambda msg: ('global_null_dropoff', 1))
- #           
- #           # Count records per minute window
- #           | 'CountNullsPerMinute' >> beam.CombinePerKey(sum)
- #           
- #           # Add the window timestamp to the element for stateful processing
- #           | 'AddNullWindowTimestamp' >> beam.Map(
- #               lambda kv, win=beam.DoFn.WindowParam: (kv[0], (int(win.end), kv[1]))
- #           )
+        # 3. BRANCH 2: Perform real-time anomaly detection for global null dropoff_datetime count
+        null_count_anomalies = (
+            messages_with_ts
+            | 'FilterNullDropoff' >> beam.Filter(lambda msg: msg.get('dropoff_datetime') is None)
             
- #           | 'NullResultToGlobal' >> beam.WindowInto(beam.window.GlobalWindows())
- #           
- #           # Detect anomalies using the new stateful DoFn for null counts
- #           | 'DetectNullCountAnomalies' >> beam.ParDo(DetectNullAnomaliesDoFn(null_count_model_path))
- #       )
+            # Group into 1-minute fixed windows
+            | 'WindowNullsIntoMinutes' >> beam.WindowInto(beam.window.FixedWindows(60))
+
+            # Create ('global_null_dropoff', 1) pairs for counting
+            | 'MapNullToCount' >> beam.Map(lambda msg: ('global_null_dropoff', 1))
+            
+            # Count records per minute window
+            | 'CountNullsPerMinute' >> beam.CombinePerKey(sum)
+            
+            # Add the window timestamp to the element for stateful processing
+            | 'AddNullWindowTimestamp' >> beam.Map(
+                lambda kv, win=beam.DoFn.WindowParam: (kv[0], (int(win.end), kv[1]))
+            )
+            
+            | 'NullResultToGlobal' >> beam.WindowInto(beam.window.GlobalWindows())
+            
+            # Detect anomalies using the new stateful DoFn for null counts
+            | 'DetectNullCountAnomalies' >> beam.ParDo(DetectNullAnomaliesDoFn(null_count_model_path))
+        )
         
- #       # 4. SINK 1: Flatten and write all detected anomalies to a dedicated BigQuery table
- #       all_anomalies = (
- #           (vendor_anomalies, null_count_anomalies)
- #           | 'FlattenAnomalies' >> beam.Flatten()
- #       )
- #       
- #       (all_anomalies
- #           | 'WriteAnomaliesToTable' >> beam.io.WriteToBigQuery(
- #               table=known_args.anomaly_output_table,
- #               schema=anomaly_table_schema,
- #               write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
- #               create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
- #               # Force streaming inserts
- #               method=beam.io.WriteToBigQuery.Method.STREAMING_INSERTS,
- #               # Disable the shuffle required for deduplication
- #               ignore_insert_ids=True 
- #           ))
+        # 4. SINK 1: Flatten and write all detected anomalies to a dedicated BigQuery table
+        all_anomalies = (
+            (vendor_anomalies, null_count_anomalies)
+            | 'FlattenAnomalies' >> beam.Flatten()
+        )
+        
+        (all_anomalies
+            | 'WriteAnomaliesToTable' >> beam.io.WriteToBigQuery(
+                table=known_args.anomaly_output_table,
+                schema=anomaly_table_schema,
+                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+                # Force streaming inserts
+                method=beam.io.WriteToBigQuery.Method.STREAMING_INSERTS,
+                # Disable the shuffle required for deduplication
+                ignore_insert_ids=True 
+            ))
                 
- #       # 5. BRANCH 3: Summarize anomalies with Gemini every minute
- #       (all_anomalies
- #           # Window all anomalies into fixed 1-minute windows based on their event time
- #           | 'WindowAnomaliesForSummary' >> beam.WindowInto(beam.window.FixedWindows(60))
- #           
- #           # Group all anomalies in the window into a single list
- #           | 'GroupAnomaliesIntoList' >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
- #           
- #           # Call Gemini to summarize the list of anomalies
- #           | 'SummarizeWithGemini' >> beam.ParDo(SummarizeAnomaliesWithGeminiFn(
- #               project_id=known_args.api_project,
- #               location=known_args.api_region
- #           ))
+        # 5. BRANCH 3: Summarize anomalies with Gemini every minute
+        (all_anomalies
+            # Window all anomalies into fixed 1-minute windows based on their event time
+            | 'WindowAnomaliesForSummary' >> beam.WindowInto(beam.window.FixedWindows(60))
             
- #           # SINK 3: Write summaries to their own BigQuery table
- #           | 'WriteSummaryToBQ' >> beam.io.WriteToBigQuery(
- #               table=known_args.summary_output_table,
- #               schema=summary_table_schema,
- #               write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
- #               create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
- #               # Force streaming inserts
- #               method=beam.io.WriteToBigQuery.Method.STREAMING_INSERTS,
- #               # Disable the shuffle required for deduplication
- #               ignore_insert_ids=True 
- #           ))
+            # Group all anomalies in the window into a single list
+            | 'GroupAnomaliesIntoList' >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
+            
+            # Call Gemini to summarize the list of anomalies
+            | 'SummarizeWithGemini' >> beam.ParDo(SummarizeAnomaliesWithGeminiFn(
+                project_id=known_args.api_project,
+                location=known_args.api_region
+            ))
+            
+            # SINK 3: Write summaries to their own BigQuery table
+            | 'WriteSummaryToBQ' >> beam.io.WriteToBigQuery(
+                table=known_args.summary_output_table,
+                schema=summary_table_schema,
+                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+                # Force streaming inserts
+                method=beam.io.WriteToBigQuery.Method.STREAMING_INSERTS,
+                # Disable the shuffle required for deduplication
+                ignore_insert_ids=True 
+            ))
 
         # 6. SINK 4: Write raw parsed messages to BigQuery for archival
         (messages_with_ts
