@@ -89,7 +89,7 @@ resource "google_logging_metric" "anomaly_summary_count" {
   # This filter targets the specific structured logs  created.
   # It looks for logs from Dataflow steps that have the correct identifier in their JSON payload.
   filter = <<-EOT
-    resource.type="cloud_run_revision"
+    resource.type="dataflow_step"
     textPayload =~ "anomaly_summary"
   EOT
 
@@ -142,8 +142,8 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
 
     condition_threshold {
       # This filter points to the log-based metric we created above.
-     # filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.anomaly_summary_count.name}\" AND resource.type=\"dataflow_step\""
-       filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.anomaly_summary_count.name}\" AND resource.type=\"cloud_run_revision\""      
+      filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.anomaly_summary_count.name}\" AND resource.type=\"dataflow_step\""
+      #filter = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.anomaly_summary_count.name}\" AND resource.type=\"cloud_run_revision\""      
       # This condition will trigger if the count is greater than 0 
       # This means an alert will fire for each summary generated.
       comparison      = "COMPARISON_GT"
@@ -184,16 +184,14 @@ resource "google_monitoring_alert_policy" "anomaly_summary_alert" {
       A new set of anomalies has been summarized by the real-time Dataflow pipeline.
       
      ## Summary from Gemini:
-     ## $${log.extracted_label.summary}
+      $${metric.label.summary}
 
      ## Number of Anomalies:
-      ##$${log.extracted_label.anomaly_count}
-
-      **Summary:** $${metric.label.summary}
-      **Number of Anomalies:** $${metric.label.anomaly_count}
+      $${metric.label.anomaly_count}
 
       Action:
-      Please review the summary and check the 'real_time_anomalies' and 'gemini_summaries' BigQuery tables for more details.
+      Please review the summary and check the 'real_time_anomalies' and 'anomaly_summary_table' BigQuery tables for more details.
+      Use dashboard to see anomalies in realtime: https://anomaly-ui-902738993392.us-central1.run.app/
     EOT
     mime_type = "text/markdown"
   }
