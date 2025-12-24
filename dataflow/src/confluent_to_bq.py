@@ -493,26 +493,26 @@ class SummarizeAnomaliesWithGeminiFn(beam.DoFn):
             }))
 			
             
-        # SEND EMAIL IMMEDIATELY
-        if self.gmail_service:
-            try:
-                subject = f"Anomalies Alert: {anomaly_count} Anomalies Detected"
-                
-                message = MIMEText(summary_text)
-                message['to'] = self.recipient_email
-                message['from'] = self.sender_email
-                message['subject'] = subject
+            # SEND EMAIL IMMEDIATELY
+            if self.gmail_service:
+                try:
+                    subject = f"Anomalies Alert: {anomaly_count} Anomalies Detected"
+                    
+                    message = MIMEText(summary_text)
+                    message['to'] = self.recipient_email
+                    message['from'] = self.sender_email
+                    message['subject'] = subject
 
-                raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+                    raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+                    
+                    self.gmail_service.users().messages().send(
+                        userId='me', 
+                        body={'raw': raw_message}
+                    ).execute()
                 
-                self.gmail_service.users().messages().send(
-                    userId='me', 
-                    body={'raw': raw_message}
-                ).execute()
-                
-                logging.info(f"Email sent successfully to {self.recipient_email}")
-            except Exception as e:
-                logging.error(f"Gmail Send Failed: {e}")
+                    logging.info(f"Email sent successfully to {self.recipient_email}")
+                except Exception as e:
+                    logging.error(f"Gmail Send Failed: {e}")
 			
             yield {
                 "window_timestamp": window_end_ts.isoformat(),
