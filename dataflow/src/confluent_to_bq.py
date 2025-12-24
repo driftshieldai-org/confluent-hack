@@ -419,21 +419,21 @@ class SummarizeAnomaliesWithGeminiFn(beam.DoFn):
         self.project_id = project_id
         self.location = location
         self.model = None
-		self.sender_email = sender_email
+        self.sender_email = sender_email
         self.recipient_email = recipient_email
         self.gmail_service = None
-		self.secret_id = secret_id
+        self.secret_id = secret_id
 
     def setup(self):
         """Initialize the Vertex AI client and model on each worker."""
         vertexai.init(project=self.project_id, location=self.location)
         self.model = GenerativeModel("gemini-2.5-flash")
 
-		try:
-    		# 1. Initialize Secret Manager Client
+        try:
+            # 1. Initialize Secret Manager Client
             client = secretmanager.SecretManagerServiceClient()
 
-		    # 2. Access the secret version
+            # 2. Access the secret version
             # secret_id format: "projects/PROJECT_ID/secrets/SECRET_NAME/versions/latest"
             response = client.access_secret_version(request={"name": self.secret_id})
             payload = json.loads(response.payload.data.decode("UTF-8"))
@@ -454,25 +454,6 @@ class SummarizeAnomaliesWithGeminiFn(beam.DoFn):
         except Exception as e:
             logging.error(f"Failed to initialize Gmail Service: {e}")
 
-
-    def send_gmail(self, subject, body):
-        """Helper method to execute the Gmail API send call."""
-        try:
-            message = MIMEText(body)
-            message['to'] = self.recipient_email
-            message['from'] = self.sender_email
-            message['subject'] = subject
-
-            # Gmail API requires the message to be base64url encoded
-            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
-            
-            self.gmail_service.users().messages().send(
-                userId='me', 
-                body={'raw': raw_message}
-            ).execute()
-            logging.info(f"Email sent successfully to {self.recipient_email}")
-        except Exception as e:
-            logging.error(f"Failed to send email via Gmail API: {e}")
 
     def process(self, anomaly_list, window=beam.DoFn.WindowParam):
         if not anomaly_list:
@@ -661,7 +642,7 @@ def run(argv=None):
     	'auto.offset.reset': 'earliest'          
     }
 
-	SECRET_PATH = "projects/aipartnercatalyst-confluent-01/secrets/gmail-oauth-creds/versions/latest"
+    SECRET_PATH = "projects/aipartnercatalyst-confluent-01/secrets/gmail-oauth-creds/versions/latest"
     SENDER = "driftshieldai@gmail.com"
     RECIPIENT = "driftshieldai@gmail.com"
 
