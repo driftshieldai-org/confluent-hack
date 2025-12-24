@@ -16,6 +16,11 @@ from datetime import datetime, timedelta, timezone # Import timezone
 import vertexai
 from vertexai.generative_models import GenerativeModel
 from google.cloud import secretmanager
+import base64
+from email.mime.text import MIMEText
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
 
 
 def get_secret(project_id, secret_id, version_id="latest"):
@@ -410,15 +415,64 @@ class SummarizeAnomaliesWithGeminiFn(beam.DoFn):
     A DoFn that takes a list of anomalies from a time window, formats them into a prompt,
     and calls the Gemini API to generate a summary.
     """
-    def __init__(self, project_id, location):
+    def __init__(self, project_id, location, sender_email, recipient_email,secret_id):
         self.project_id = project_id
         self.location = location
         self.model = None
+		self.sender_email = sender_email
+        self.recipient_email = recipient_email
+        self.gmail_service = None
+		self.secret_id = secret_id
 
     def setup(self):
         """Initialize the Vertex AI client and model on each worker."""
         vertexai.init(project=self.project_id, location=self.location)
         self.model = GenerativeModel("gemini-2.5-flash")
+
+		try:
+    		# 1. Initialize Secret Manager Client
+            client = secretmanager.SecretManagerServiceClient()
+
+		    # 2. Access the secret version
+            # secret_id format: "projects/PROJECT_ID/secrets/SECRET_NAME/versions/latest"
+            response = client.access_secret_version(request={"name": self.secret_id})
+            payload = json.loads(response.payload.data.decode("UTF-8"))
+    
+            # 3. Create Credentials object with Refresh Token logic
+            # This object automatically handles expiry by using the refresh_token
+            creds = Credentials(
+                    token=payload.get('access_token'),
+                    refresh_token=payload.get('refresh_token'),
+                    token_uri="https://oauth2.googleapis.com/token",
+                    client_id=payload.get('client_id'),
+                    client_secret=payload.get('client_secret')
+                )
+		
+		    # Build the Gmail service
+            self.gmail_service = build('gmail', 'v1', credentials=creds)
+
+        except Exception as e:
+            logging.error(f"Failed to initialize Gmail Service: {e}")
+
+
+    def send_gmail(self, subject, body):
+        """Helper method to execute the Gmail API send call."""
+        try:
+            message = MIMEText(body)
+            message['to'] = self.recipient_email
+            message['from'] = self.sender_email
+            message['subject'] = subject
+
+            # Gmail API requires the message to be base64url encoded
+            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+            
+            self.gmail_service.users().messages().send(
+                userId='me', 
+                body={'raw': raw_message}
+            ).execute()
+            logging.info(f"Email sent successfully to {self.recipient_email}")
+        except Exception as e:
+            logging.error(f"Failed to send email via Gmail API: {e}")
 
     def process(self, anomaly_list, window=beam.DoFn.WindowParam):
         if not anomaly_list:
@@ -456,6 +510,28 @@ class SummarizeAnomaliesWithGeminiFn(beam.DoFn):
                 "summary": summary_text,
                 "anomaly_count": len(anomaly_list)
             }))
+			
+            
+        # SEND EMAIL IMMEDIATELY
+        if self.gmail_service:
+            try:
+                subject = f"Anomalies Alert: {anomaly_count} Anomalies Detected"
+                
+                message = MIMEText(summary_text)
+                message['to'] = self.recipient_email
+                message['from'] = self.sender_email
+                message['subject'] = subject
+
+                raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+                
+                self.gmail_service.users().messages().send(
+                    userId='me', 
+                    body={'raw': raw_message}
+                ).execute()
+                
+                logging.info(f"Email sent successfully to {self.recipient_email}")
+            except Exception as e:
+                logging.error(f"Gmail Send Failed: {e}")
 			
             yield {
                 "window_timestamp": window_end_ts.isoformat(),
@@ -585,6 +661,10 @@ def run(argv=None):
     	'auto.offset.reset': 'earliest'          
     }
 
+	SECRET_PATH = "projects/aipartnercatalyst-confluent-01/secrets/gmail-oauth-creds/versions/latest"
+    SENDER = "driftshieldai@gmail.com"
+    RECIPIENT = "driftshieldai@gmail.com"
+
     with beam.Pipeline(options=pipeline_options) as pipeline:
         # 1. Read from Confluent, parse, and assign event timestamps
         messages_with_ts = (
@@ -688,7 +768,10 @@ def run(argv=None):
             # Call Gemini to summarize the list of anomalies
             | 'SummarizeWithGemini' >> beam.ParDo(SummarizeAnomaliesWithGeminiFn(
                 project_id=known_args.api_project,
-                location=known_args.api_region
+                location=known_args.api_region,
+				sender_email=SENDER, 
+				recipient_email=RECIPIENT,
+				secret_id=SECRET_PATH
             ))
             
             # SINK 3: Write summaries to their own BigQuery table
