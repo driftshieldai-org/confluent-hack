@@ -7,6 +7,7 @@ resource "null_resource" "submit_vertex_job" {
   #  ]))
   #}
 
+
   provisioner "local-exec" {
     command = <<EOT
       gcloud ai custom-jobs create \
