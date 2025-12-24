@@ -119,6 +119,6 @@ resource "google_project_iam_member" "train_sa_roles" {
   for_each = toset(["roles/artifactregistry.reader","roles/bigquery.dataViewer","roles/bigquery.jobUser","roles/bigquery.readSessionUser","roles/storage.objectUser","roles/storage.bucketViewer"])
   project = var.project_id
   role    = each.value
-  member  = "serviceAccount:${google_service_account.gcp_sa.email}"
+  member  = "serviceAccount:${google_service_account.gcp_train_sa.email}"
 }
 
