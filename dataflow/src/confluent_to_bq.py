@@ -16,6 +16,11 @@ from datetime import datetime, timedelta, timezone # Import timezone
 import vertexai
 from vertexai.generative_models import GenerativeModel
 from google.cloud import secretmanager
+import base64
+from email.mime.text import MIMEText
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
 
 
 def get_secret(project_id, secret_id, version_id="latest"):
@@ -410,15 +415,44 @@ class SummarizeAnomaliesWithGeminiFn(beam.DoFn):
     A DoFn that takes a list of anomalies from a time window, formats them into a prompt,
     and calls the Gemini API to generate a summary.
     """
-    def __init__(self, project_id, location):
+    def __init__(self, project_id, location, access_token, sender_email, recipient_email):
         self.project_id = project_id
         self.location = location
         self.model = None
+		self.sender_email = "driftshieldai@gmail.com"
+        self.recipient_email = "driftshieldai@gmail.com"
+		self.access_token = access_token
+        self.gmail_service = None
 
     def setup(self):
         """Initialize the Vertex AI client and model on each worker."""
         vertexai.init(project=self.project_id, location=self.location)
         self.model = GenerativeModel("gemini-2.5-flash")
+		creds = Credentials(token=self.access_token)            
+            # Build the Gmail service
+            self.gmail_service = build('gmail', 'v1', credentials=creds)
+        except Exception as e:
+            logging.error(f"Failed to initialize Gmail Service: {e}")
+
+
+    def send_gmail(self, subject, body):
+        """Helper method to execute the Gmail API send call."""
+        try:
+            message = MIMEText(body)
+            message['to'] = self.recipient_email
+            message['from'] = self.sender_email
+            message['subject'] = subject
+
+            # Gmail API requires the message to be base64url encoded
+            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+            
+            self.gmail_service.users().messages().send(
+                userId='me', 
+                body={'raw': raw_message}
+            ).execute()
+            logging.info(f"Email sent successfully to {self.recipient_email}")
+        except Exception as e:
+            logging.error(f"Failed to send email via Gmail API: {e}")
 
     def process(self, anomaly_list, window=beam.DoFn.WindowParam):
         if not anomaly_list:
@@ -456,6 +490,14 @@ class SummarizeAnomaliesWithGeminiFn(beam.DoFn):
                 "summary": summary_text,
                 "anomaly_count": len(anomaly_list)
             }))
+			
+            mail_subject = f"Anomaly Alert: {len(anomaly_list)} issues detected"
+            if self.gmail_service:
+                subject = f"Alert: {len(anomaly_list)} Anomalies Detected"
+                self.send_gmail(mail_subject, summary_text)
+            else:
+                logging.error("Gmail service not initialized. Skipping email.")
+
 			
             yield {
                 "window_timestamp": window_end_ts.isoformat(),
