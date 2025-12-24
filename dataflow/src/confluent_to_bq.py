@@ -64,6 +64,8 @@ class DetectVendorAnomaliesDoFn(beam.DoFn):
     LAST_SEEN_STATE = ReadModifyWriteStateSpec('last_seen', VarIntCoder())
     # Define state to track the last time an anomaly was raised to suppress duplicates
     LAST_ANOMALY_TS_STATE = ReadModifyWriteStateSpec('last_anomaly_ts', VarIntCoder())
+    # Define state to track the last time an "Unknown Vendor" alert was sent
+    LAST_UNKNOWN_VENDOR_ALERT_TS_STATE = ReadModifyWriteStateSpec('last_unknown_vendor_alert_ts', VarIntCoder())
     # Define state to track the first time a vendor is seen to suppress initial anomalies
     FIRST_SEEN_TS_STATE = ReadModifyWriteStateSpec('first_seen_ts', VarIntCoder())
     # Define a timer that will fire to check for silent vendors
@@ -76,8 +78,6 @@ class DetectVendorAnomaliesDoFn(beam.DoFn):
         self.scaler = None
         self.vendor_encoder = None
         self.training_stats = None
-        # Keep track of warned vendors to avoid log spam
-        self._warned_vendor_ids = set()
 
 
     def setup(self):
@@ -108,6 +108,7 @@ class DetectVendorAnomaliesDoFn(beam.DoFn):
                 counts_state=beam.DoFn.StateParam(COUNTS_STATE),
                 last_seen_state=beam.DoFn.StateParam(LAST_SEEN_STATE),
                 last_anomaly_ts_state=beam.DoFn.StateParam(LAST_ANOMALY_TS_STATE),
+                last_unknown_vendor_alert_ts_state=beam.DoFn.StateParam(LAST_UNKNOWN_VENDOR_ALERT_TS_STATE),
                 first_seen_ts_state=beam.DoFn.StateParam(FIRST_SEEN_TS_STATE),
                 silence_timer=beam.DoFn.TimerParam(SILENCE_TIMER)):
         
@@ -146,10 +147,11 @@ class DetectVendorAnomaliesDoFn(beam.DoFn):
                 clean_vendor_id = vendor_id
                 encoded_vendor = self.vendor_encoder.transform([clean_vendor_id])[0]
             except (ValueError, IndexError, TypeError):
-                # If the vendor ID is unknown, generate an anomaly record and stop processing for this element.
-                if vendor_id not in self._warned_vendor_ids:
-                    logging.warning(f"Unknown Vendor ID: {vendor_id}. Generating anomaly.")
-                    self._warned_vendor_ids.add(vendor_id)
+                # If the vendor ID is unknown, check if we should send a daily alert.
+                last_alert_ts = last_unknown_vendor_alert_ts_state.read()
+                # Suppress for 24 hours (86400 seconds)
+                if last_alert_ts is None or (timestamp_sec - last_alert_ts > 86400):
+                    logging.warning(f"Unknown Vendor ID: {vendor_id}. Generating daily anomaly.")
                     yield {
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                         "Metric": "UNKNOWN_VENDOR_ID",
@@ -159,6 +161,8 @@ class DetectVendorAnomaliesDoFn(beam.DoFn):
                         "score": None,
                         "details": f"Vendor ID '{vendor_id}' was not present in the training data."
                     }
+                    # Update state to start new 24-hour suppression window
+                    last_unknown_vendor_alert_ts_state.write(timestamp_sec)
                 return
 
             # --- CREATE FEATURES ---
@@ -216,7 +220,7 @@ class DetectVendorAnomaliesDoFn(beam.DoFn):
                         "Metric": "STATISTICAL_OUTLIER",
                         "severity": severity,
                         "vendor_id": vendor_id,
-                        "count": count,
+                        "count": int(counts_series.sum()),
                         "score": float(score),
                         "details": json.dumps({
                             "realtime_mean_last_5m": features['rolling_mean_5min_vendor'],
@@ -383,7 +387,7 @@ class DetectNullAnomaliesDoFn(beam.DoFn):
                         "Metric": "NULL_DROPOFF_COUNT_OUTLIER",
                         "severity": severity,
                         "vendor_id": "global", # This is a global metric
-                        "count": count,
+                        "count": int(counts_series.sum()),
                         "score": float(score),
                         "details": json.dumps({
                             "realtime_mean_last_5m": features['rolling_mean_5min'],
