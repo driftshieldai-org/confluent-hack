@@ -20,6 +20,8 @@
       align-items: center;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       border-bottom: 1px solid #e0e0e0;
+      position: relative; 
+      height: 100px;
     }
 
     .logo-icon {
@@ -27,6 +29,7 @@
       height: 100px;
       margin-right: 20px;
       object-fit: contain;
+      z-index: 2; 
     }
 
     .app-name {
@@ -34,6 +37,11 @@
       font-weight: 700;
       color: #333;
       letter-spacing: -0.5px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap; /* Keeps text on one line */
+      margin: 0;
     }
     
     .app-name span {
