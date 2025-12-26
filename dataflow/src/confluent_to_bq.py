@@ -218,7 +218,11 @@ class DetectVendorAnomaliesDoFn(beam.DoFn):
                         logging.info(f"Suppressing initial anomaly for new vendor '{vendor_id}' within 5-minute grace period.")
                         return
 
-
+                    # Retrieve the specific baseline for this vendor from the dictionary
+                    vendor_baseline = self.training_stats.get(vendor_id, {})
+                    training_mean = vendor_baseline.get('mean', 0.0)
+                    training_std = vendor_baseline.get('std', 0.0)
+				
                     severity = "high" if score < -0.15 else "medium"
                     anomaly_record = {
                         "timestamp": current_timestamp.isoformat(),
@@ -230,8 +234,8 @@ class DetectVendorAnomaliesDoFn(beam.DoFn):
                         "details": json.dumps({
                             "realtime_mean_last_5m": features['rolling_mean_5min_vendor'],
                             "realtime_std_dev_last_5m": features['rolling_std_5min_vendor'],
-                            "training_baseline_mean": self.training_stats.get('mean_record_count_1min', 0.0),
-                            "training_baseline_std_dev": self.training_stats.get('std_record_count_1min', 0.0)
+                            "training_baseline_mean": float(training_mean),
+                            "training_baseline_std_dev": float(training_std)
                         })
                     }
                     logging.warning(f"ANOMALY DETECTED: {json.dumps(anomaly_record)}")
