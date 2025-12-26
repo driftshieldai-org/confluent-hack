@@ -1,109 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Real-Time Anomalies</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-        h1 { color: #333; }
-        
-        table { width: 100%; border-collapse: collapse; box-shadow: 0 0 10px rgba(0,0,0,0.1); background: white; }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-        th { background-color: #007bff; color: white; }
-        
-        /* Flashing Animation Keyframes */
-        @keyframes flash {
-            0% { background-color: #ffeb3b; } /* Yellow highlight */
-            100% { background-color: white; }
-        }
-        
-        .flash-new {
-            animation: flash 5s ease-out;
-        }
+  <meta charset="UTF-8">
+  <title>DriftShield AI - Anomaly Dashboard</title>
+  <style>
+    /* Reset and Base Styles */
+    body { 
+      font-family: sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      background-color: #f4f4f9; 
+    }
 
-        .severity-high { color: #d9534f; font-weight: bold; }
-        .severity-medium { color: #f0ad4e; }
-        .severity-low { color: #5bc0de; }
-    </style>
+    /* --- New Header/Logo Styles --- */
+    .app-header {
+      background-color: #ffffff;
+      padding: 15px 25px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      margin-right: 12px;
+      fill: #007bff; /* Matches table header */
+    }
+
+    .app-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: -0.5px;
+    }
+    
+    .app-name span {
+      color: #007bff; /* "AI" in blue */
+    }
+
+    /* --- Main Layout --- */
+    .container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 { color: #333; font-size: 1.8rem; margin-top: 10px; }
+    
+    /* --- Table Styles --- */
+    table { width: 100%; border-collapse: collapse; box-shadow: 0 0 10px rgba(0,0,0,0.1); background: white; margin-top: 15px; }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background-color: #007bff; color: white; }
+    
+    /* Flashing Animation Keyframes */
+    @keyframes flash {
+      0% { background-color: #ffeb3b; } /* Yellow highlight */
+      100% { background-color: white; }
+    }
+    
+    .flash-new {
+      animation: flash 5s ease-out;
+    }
+
+    .severity-high { color: #d9534f; font-weight: bold; }
+    .severity-medium { color: #f0ad4e; }
+    .severity-low { color: #5bc0de; }
+    
+    #status { color: #666; font-size: 0.9rem; }
+  </style>
 </head>
 <body>
+
+  <!-- Branding / Header Section -->
+  <header class="app-header">
+    <!-- Inline SVG Logo (Shield) -->
+    <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+    </svg>
+    <div class="app-name">DriftShield <span>AI</span></div>
+  </header>
+
+  <!-- Main Content Area -->
+  <div class="container">
     <h1>Real-Time Anomalies (Last 100)</h1>
     <div id="status">Last updated: <span id="last-updated">Never</span></div>
     <br>
     <table>
-        <thead>
-            <tr>
-                <th>Timestamp</th>
-                <th>Metric</th>
-                <th>Severity</th>
-                <th>Vendor ID</th>
-                <th>Count</th>
-                <th>Score</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody id="table-body">
-            <!-- Rows will be inserted here -->
-        </tbody>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Metric</th>
+          <th>Severity</th>
+          <th>Vendor ID</th>
+          <th>Count</th>
+          <th>Score</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <!-- Rows will be inserted here -->
+      </tbody>
     </table>
+  </div>
 
-    <script>
-        // Store IDs or Timestamps of known rows to identify new ones
-        let knownRows = new Set();
-        const API_URL = '/api/anomalies'; // Update if backend URL differs
+  <script>
+    // Store IDs or Timestamps of known rows to identify new ones
+    let knownRows = new Set();
+    const API_URL = '/api/anomalies'; // Update if backend URL differs
 
-        async function fetchData() {
-            try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-                
-                updateTable(data);
-                document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
+    // Mock Data Generator for DEMO PURPOSES ONLY (Remove this block in production)
+    // This allows you to see the UI without a running backend.
+    /*
+    async function mockFetch() {
+      // Simulate API delay
+      await new Promise(r => setTimeout(r, 500));
+      return [
+        { timestamp: new Date().toISOString(), metric: 'CPU_Spike', severity: 'High', vendor_id: 'V-102', count: 45, score: 0.98, details: 'Threshold > 90%' },
+        { timestamp: new Date(Date.now() - 100000).toISOString(), metric: 'Latency', severity: 'Medium', vendor_id: 'V-404', count: 12, score: 0.65, details: '1500ms delay' }
+      ];
+    }
+    */
+
+    async function fetchData() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        
+        // Use this line instead for testing without backend:
+        // const data = await mockFetch(); 
+
+        updateTable(data);
+        document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        // Optional: Show error in status
+        // document.getElementById('last-updated').textContent = "Error connecting to API";
+      }
+    }
+
+    function updateTable(data) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = ''; // Clear current table
+
+      // New Set for the next iteration
+      const currentRows = new Set();
+
+      data.forEach(row => {
+        // Create a unique key for the row to track uniqueness (e.g., timestamp + vendor_id)
+        const uniqueKey = `${row.timestamp}-${row.vendor_id}-${row.metric}`;
+        currentRows.add(uniqueKey);
+
+        const tr = document.createElement('tr');
+        
+        // If we didn't know this row before, add the flash class
+        if (!knownRows.has(uniqueKey) && knownRows.size > 0) {
+          tr.classList.add('flash-new');
         }
 
-        function updateTable(data) {
-            const tbody = document.getElementById('table-body');
-            tbody.innerHTML = ''; // Clear current table
+        tr.innerHTML = `
+          <td>${new Date(row.timestamp).toLocaleString()}</td>
+          <td>${row.metric}</td>
+          <td class="severity-${row.severity.toLowerCase()}">${row.severity}</td>
+          <td>${row.vendor_id}</td>
+          <td>${row.count}</td>
+          <td>${row.score}</td>
+          <td>${row.details || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
 
-            // New Set for the next iteration
-            const currentRows = new Set();
+      // Update known rows for the next poll
+      knownRows = currentRows;
+    }
 
-            data.forEach(row => {
-                // Create a unique key for the row to track uniqueness (e.g., timestamp + vendor_id)
-                const uniqueKey = `${row.timestamp}-${row.vendor_id}-${row.metric}`;
-                currentRows.add(uniqueKey);
+    // Initial fetch
+    fetchData();
 
-                const tr = document.createElement('tr');
-                
-                // If we didn't know this row before, add the flash class
-                if (!knownRows.has(uniqueKey) && knownRows.size > 0) {
-                    tr.classList.add('flash-new');
-                }
-
-                tr.innerHTML = `
-                    <td>${new Date(row.timestamp).toLocaleString()}</td>
-                    <td>${row.metric}</td>
-                    <td class="severity-${row.severity.toLowerCase()}">${row.severity}</td>
-                    <td>${row.vendor_id}</td>
-                    <td>${row.count}</td>
-                    <td>${row.score}</td>
-                    <td>${row.details || ''}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            // Update known rows for the next poll
-            knownRows = currentRows;
-        }
-
-        // Initial fetch
-        fetchData();
-
-        // Poll every 60 seconds (60000 ms)
-        setInterval(fetchData, 60000);
-    </script>
+    // Poll every 60 seconds (60000 ms)
+    setInterval(fetchData, 60000);
+  </script>
 </body>
 </html>
