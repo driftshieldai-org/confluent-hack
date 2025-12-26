@@ -96,6 +96,11 @@ def train_record_count_by_vendor(args, client, storage_client):
     df.dropna(inplace=True)
     print(f"Data shape after feature engineering and dropping NaNs: {df.shape}")
 
+    vendor_stats_df = df.groupby('vendor_id')['record_count_1min'].agg(['mean', 'std'])
+    training_stats = vendor_stats_df.to_dict(orient='index')
+    print(f"Overall training stats: {training_stats}")
+
+
     le_vendor = LabelEncoder()
     df['vendor_id_encoded'] = le_vendor.fit_transform(df['vendor_id'])
 
@@ -113,11 +118,6 @@ def train_record_count_by_vendor(args, client, storage_client):
     model = IsolationForest(n_estimators=100, contamination=args.contamination, random_state=42)
     model.fit(X_scaled)
 
-    training_stats = {
-        'mean_record_count_1min': df['record_count_1min'].mean(),
-        'std_record_count_1min': df['record_count_1min'].std()
-    }
-    print(f"Overall training stats: {training_stats}")
 
     output_dir = os.path.join(args.model_dir, 'record_count_by_vendor')
     save_artifact(storage_client, output_dir, 'model.pkl', model)
